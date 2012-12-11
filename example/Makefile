@@ -1,4 +1,4 @@
-MRUBY_ROOT = ../../mruby
+MRUBY_ROOT = ../tmp/mruby
 MRUBY_LIB := $(MRUBY_ROOT)/lib/libmruby.a
 LDFLAGS = $(MRUBY_LIB) ../libmrb_redis.a  -lm -lhiredis
 
