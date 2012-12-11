@@ -30,12 +30,12 @@
 #include <string.h>
 #include <time.h>
 #include <hiredis/hiredis.h>
-#include <mruby.h>
-#include <mruby/data.h>
-#include <mruby/variable.h>
-#include <mruby/array.h>
-#include <mruby/string.h>
-//#include <mrb_redis.h>
+#include "mruby.h"
+#include "mruby/data.h"
+#include "mruby/variable.h"
+#include "mruby/array.h"
+#include "mruby/string.h"
+#include "mrb_redis.h"
 
 //#ifdef ENABLE_REDIS
 static void redisContext_free(mrb_state *mrb, void *p)
