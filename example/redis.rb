@@ -1,16 +1,3 @@
-redis class for mruby
-
-* install
-
-    make
-    cd example
-    make
-    ./tester redis.rb
-
-
-* redis.rb
-
-```ruby
 host    = "127.0.0.1"
 port    = 6379
 
@@ -27,5 +14,3 @@ puts("> redis get " + key)
 puts(key + ": " + redis.get(key))
 
 redis.close
-
-```

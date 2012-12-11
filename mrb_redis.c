@@ -38,6 +38,14 @@
 //#include <mrb_redis.h>
 
 //#ifdef ENABLE_REDIS
+static void redisContext_free(mrb_state *mrb, void *p)
+{
+    redisFree(p);    
+}
+
+static const struct mrb_data_type redisContext_type = {
+    "redisContext", redisContext_free,
+};
 
 mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
 {
@@ -49,7 +57,7 @@ mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
     if (rc->err)
         mrb_raise(mrb, E_RUNTIME_ERROR, "redis connection faild.");
 
-    mrb_iv_set(mrb, self, mrb_intern(mrb, "redis_c"), mrb_obj_value(Data_Wrap_Struct(mrb, mrb->object_class, NULL, (void*) rc)));
+    mrb_iv_set(mrb, self, mrb_intern(mrb, "redis_c"), mrb_obj_value(Data_Wrap_Struct(mrb, mrb->object_class, &redisContext_type, (void*) rc)));
     return self;
 }
 
@@ -62,7 +70,7 @@ mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
     mrb_get_args(mrb, "oo", &key, &val);
 
     context = mrb_iv_get(mrb, self, mrb_intern(mrb, "redis_c"));
-    Data_Get_Struct(mrb, context, NULL, rc);
+    Data_Get_Struct(mrb, context, &redisContext_type, rc);
     if (!rc)
         mrb_raise(mrb, E_RUNTIME_ERROR, "mrb_iv_get redis_c failed");
 
@@ -83,7 +91,7 @@ mrb_value mrb_redis_get(mrb_state *mrb, mrb_value self)
     mrb_get_args(mrb, "o", &key);
 
     context = mrb_iv_get(mrb, self, mrb_intern(mrb, "redis_c"));
-    Data_Get_Struct(mrb, context, NULL, rc);
+    Data_Get_Struct(mrb, context, &redisContext_type, rc);
 
     redisReply *rs;
     rs = redisCommand(rc,"get %s", RSTRING_PTR(key));
@@ -92,10 +100,21 @@ mrb_value mrb_redis_get(mrb_state *mrb, mrb_value self)
         freeReplyObject(rs);
         return mrb_str_new(mrb, val, strlen(val));
     } else {
+        freeReplyObject(rs);
         return mrb_nil_value();
     }
 }
 
+mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self)
+{
+    redisContext *rc;
+    mrb_value context;
+
+    context = mrb_iv_get(mrb, self, mrb_intern(mrb, "redis_c"));
+    Data_Get_Struct(mrb, context, &redisContext_type, rc);
+
+    return mrb_nil_value();
+}
 /*
 mrb_value mrb_redis_mget(mrb_state *mrb, mrb_value self)
 {
@@ -155,14 +174,18 @@ mrb_value mrb_redis_mget(mrb_state *mrb, mrb_value self)
 }
 */
 
-void mrb_redis_init(mrb_state *mrb, struct RClass *class_core)
+void mrb_redis_init(mrb_state *mrb)
 {
     struct RClass *redis;
+    struct RClass *redis_simple;
 
     redis = mrb_define_module(mrb, "Redis");
-    mrb_define_method(mrb, redis, "initialize", mrb_redis_connect, ARGS_ANY());
-    mrb_define_method(mrb, redis, "set", mrb_redis_set, ARGS_ANY());
-    mrb_define_method(mrb, redis, "get", mrb_redis_get, ARGS_ANY());
+    
+    redis_simple = mrb_define_class_under(mrb, redis, "Simple", mrb->object_class);
+    mrb_define_method(mrb, redis_simple, "initialize", mrb_redis_connect, ARGS_ANY());
+    mrb_define_method(mrb, redis_simple, "set", mrb_redis_set, ARGS_ANY());
+    mrb_define_method(mrb, redis_simple, "get", mrb_redis_get, ARGS_ANY());
+    mrb_define_method(mrb, redis_simple, "close", mrb_redis_close, ARGS_NONE());
 }
 
 //#endif
