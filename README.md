@@ -12,6 +12,9 @@ redis class for mruby
 
 * redis.rb
 
+** code
+
+
 ```ruby
 host    = "127.0.0.1"
 port    = 6379
@@ -29,5 +32,13 @@ puts("> redis get " + key)
 puts(key + ": " + redis.get(key))
 
 redis.close
+```
+** execute
+
+```test
+> redis connect 127.0.0.1:6379
+> redis set hoge 200
+> redis get hoge
+hoge: 200
 
 ```
