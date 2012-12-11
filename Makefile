@@ -26,6 +26,5 @@ libmruby.a: tmp/mruby
 clean :
 	rm -f *.o libmrb_redis.a
 
-#   clobber
 clobber: clean
 	-rm -rf tmp
