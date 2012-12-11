@@ -2,12 +2,12 @@ redis class for mruby
 
 ## install
 
-        git clone git://github.com/matsumoto-r/mruby-redis.git
-        cd mruby-redis
-        make
-        cd example
-        make
-        ./tester redis.rb
+    git clone git://github.com/matsumoto-r/mruby-redis.git
+    cd mruby-redis
+    make
+    cd example
+    make
+    ./tester redis.rb
 
 
 ## redis.rb
