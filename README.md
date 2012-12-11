@@ -1,6 +1,6 @@
 redis class for mruby
 
-* install
+## install
 
         git clone git://github.com/matsumoto-r/mruby-redis.git
         cd mruby-redis
@@ -10,9 +10,9 @@ redis class for mruby
         ./tester redis.rb
 
 
-* redis.rb
+## redis.rb
 
-** code
+* code
 
 
 ```ruby
@@ -33,7 +33,8 @@ puts(key + ": " + redis.get(key))
 
 redis.close
 ```
-** execute
+
+* execute
 
 ```test
 > redis connect 127.0.0.1:6379
