@@ -41,5 +41,4 @@ redis.close
 > redis set hoge 200
 > redis get hoge
 hoge: 200
-
 ```
