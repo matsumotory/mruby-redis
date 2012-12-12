@@ -161,6 +161,72 @@ mrb_value mrb_redis_decr(mrb_state *mrb, mrb_value self)
     return  mrb_fixnum_value(counter);
 }
 
+mrb_value mrb_redis_rpush(mrb_state *mrb, mrb_value self)
+{
+    mrb_value key, val;
+    mrb_int integer;
+
+    mrb_get_args(mrb, "oo", &key, &val);
+    redisContext *rc = mrb_redis_get_context(mrb, self);
+    redisReply *rr = redisCommand(rc,"RPUSH %s %s", RSTRING_PTR(key), RSTRING_PTR(val));
+    integer = rr->integer;
+    freeReplyObject(rr);
+
+    return  mrb_fixnum_value(integer);
+}
+
+mrb_value mrb_redis_lpush(mrb_state *mrb, mrb_value self)
+{
+    mrb_value key, val;
+    mrb_int integer;
+
+    mrb_get_args(mrb, "oo", &key, &val);
+    redisContext *rc = mrb_redis_get_context(mrb, self);
+    redisReply *rr = redisCommand(rc,"LPUSH %s %s", RSTRING_PTR(key), RSTRING_PTR(val));
+    integer = rr->integer;
+    freeReplyObject(rr);
+
+    return  mrb_fixnum_value(integer);
+}
+
+mrb_value mrb_redis_lrange(mrb_state *mrb, mrb_value self)
+{
+    int i;
+    mrb_value list, array;
+    mrb_int arg1, arg2;
+
+    mrb_get_args(mrb, "oii", &list, &arg1, &arg2);
+    redisContext *rc = mrb_redis_get_context(mrb, self);
+    redisReply *rr = redisCommand(rc,"LRANGE %s %d %d", RSTRING_PTR(list), arg1, arg2);
+    if (rr->type == REDIS_REPLY_ARRAY) {
+        array = mrb_ary_new(mrb);
+        for (i = 0; i < rr->elements; i++) {
+            mrb_ary_push(mrb, array, mrb_str_new2(mrb, rr->element[i]->str));
+        }
+    } else {
+        freeReplyObject(rr);
+        return mrb_nil_value();
+    }
+
+    freeReplyObject(rr);
+
+    return array;
+}
+
+mrb_value mrb_redis_ltrim(mrb_state *mrb, mrb_value self)
+{
+    mrb_value list;
+    mrb_int arg1, arg2, integer;
+
+    mrb_get_args(mrb, "oii", &list, &arg1, &arg2);
+    redisContext *rc = mrb_redis_get_context(mrb, self);
+    redisReply *rr = redisCommand(rc,"LTRIM %s %d %d", RSTRING_PTR(list), arg1, arg2);
+    integer = rr->integer;
+    freeReplyObject(rr);
+
+    return  mrb_fixnum_value(integer);
+}
+
 mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self)
 {
     redisContext *rc;
@@ -171,65 +237,6 @@ mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self)
 
     return mrb_nil_value();
 }
-
-/*
-mrb_value mrb_redis_mget(mrb_state *mrb, mrb_value self)
-{
-    long int i;
-    mrb_value key, array;
-    redisContext *rc;
-    mrb_value context;
-    char **val;
-    request_rec *r = ap_mrb_get_request();
-
-    mrb_get_args(mrb, "o", &key);
-
-    context = mrb_iv_get(mrb, self, mrb_intern(mrb, "redis_c"));
-    Data_Get_Struct(mrb, context, NULL, rc);
-
-    redisReply *rs;
-    //rs = redisCommand(rc,"mget %s", RSTRING_PTR(key));
-    rs = redisCommand(rc,"keys *");
-    val = apr_pcalloc(r->pool, sizeof(char **));
-    if (rs->type == REDIS_REPLY_ARRAY ) {
-        for(i = 0; i < rs->elements; i++){
-            array = mrb_ary_new(mrb);
-        ap_log_error(APLOG_MARK
-            , APLOG_ERR
-            , 0
-            , NULL
-            , "%s ERROR %s: key=(%s) redis array result: %d) %s"
-            , MODULE_NAME
-            , __func__
-            , RSTRING_PTR(key)
-            , i
-            , rs->element[i]->str
-        );
-            //mrb_ary_push(mrb, array, mrb_str_new2(mrb, rs->element[i]->str));
-            val[i] = apr_pstrdup(r->pool, rs->element[i]->str);
-            mrb_ary_set(mrb, array, i, mrb_str_new2(mrb, val[i]));
-        }
-        for (i = 0; i < rs->elements; i++){
-        ap_log_error(APLOG_MARK
-            , APLOG_ERR
-            , 0
-            , NULL
-            , "%s ERROR %s: key=(%s) redis array val: %d) %s"
-            , MODULE_NAME
-            , __func__
-            , RSTRING_PTR(key)
-            , i
-            , val[i]
-        );
-            
-        }
-        freeReplyObject(rs);
-        return array;
-    } else {
-        return mrb_nil_value();
-    }
-}
-*/
 
 void mrb_redis_init(mrb_state *mrb)
 {
@@ -251,6 +258,10 @@ void mrb_redis_init(mrb_state *mrb)
     mrb_define_method(mrb, redis, "del", mrb_redis_del, ARGS_ANY());
     mrb_define_method(mrb, redis, "incr", mrb_redis_incr, ARGS_OPT(1));
     mrb_define_method(mrb, redis, "decr", mrb_redis_decr, ARGS_OPT(1));
+    mrb_define_method(mrb, redis, "rpush", mrb_redis_rpush, ARGS_OPT(2));
+    mrb_define_method(mrb, redis, "lpush", mrb_redis_lpush, ARGS_OPT(2));
+    mrb_define_method(mrb, redis, "lrange", mrb_redis_lrange, ARGS_ANY());
+    mrb_define_method(mrb, redis, "ltrim", mrb_redis_ltrim, ARGS_ANY());
     mrb_define_method(mrb, redis, "close", mrb_redis_close, ARGS_NONE());
     DONE;
 }
