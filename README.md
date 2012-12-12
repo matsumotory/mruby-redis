@@ -1,4 +1,4 @@
-redis class for mruby
+# redis class for mruby
 
 ## install
 
