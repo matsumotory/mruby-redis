@@ -55,6 +55,27 @@ puts "#{key} decr: #{r.decr(key)}"
 puts "#{key} decr: #{r.decr(key)}"
 puts "#{key} decr: #{r.decr(key)}"
 
+puts "> redis lpush logs error"
+r.lpush "logs", "error1"
+r.lpush "logs", "error2"
+r.lpush "logs", "error3"
+
+puts "> redis lrange 0 -1"
+puts r.lrange "logs", 0, -1
+
+puts "> redis ltrim 1 -1"
+r.ltrim "logs", 1, -1
+
+puts "> redis lrange 0 -1"
+puts r.lrange "logs", 0, -1
+
+puts "> redis del logs"
+r.del "logs"
+
+if r["logs"].nil?
+    puts "del success!"
+end
+
 r.close
 ```
 
