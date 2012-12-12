@@ -81,9 +81,32 @@ r.close
 
 * execute
 
-```test
+```text
 > redis connect 127.0.0.1:6379
 > redis set hoge 200
 > redis get hoge
 hoge: 200
+> redis set hoge fuga
+> redis get hoge
+hoge: fuga
+> redis del hoge
+del success!
+> redis incr hoge
+hoge incr: 1
+hoge incr: 2
+hoge incr: 3
+hoge incr: 4
+> redis decr hoge
+hoge decr: 3
+hoge decr: 2
+hoge decr: 1
+hoge decr: 0
+> redis lpush logs error
+> redis lrange 0 -1
+["error3", "error2", "error1"]
+> redis ltrim 1 -1
+> redis lrange 0 -1
+["error2", "error1"]
+> redis del logs
+del success!
 ```
