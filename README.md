@@ -16,7 +16,7 @@
     echo mruby-redis >> ${MRUBY_ROOT}/mrbgems/GEMS.active
     cd ${MRUBY_ROOT}
     make
-    ./bin/mruby redis.rb
+    ./bin/mruby ${MRUBY_ROOT}/mrbgems/g/mruby-redis/example/redis.rb
 
 ## redis.rb
 
