@@ -76,6 +76,9 @@ if r["logs"].nil?
     puts "del success!"
 end
 
+puts "> redis publish :one hello"
+r.publish "one", "hello"
+
 r.close
 ```
 
@@ -109,4 +112,5 @@ hoge decr: 0
 ["error2", "error1"]
 > redis del logs
 del success!
+> redis publish :one hello
 ```
