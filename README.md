@@ -11,12 +11,14 @@
 
 ## install by gems
 
+    ```bash
     git clone git://github.com/matsumoto-r/mruby-redis.git
     cp -pr mruby-redis ${MRUBY_ROOT}/mrbgems/g/.
     echo mruby-redis >> ${MRUBY_ROOT}/mrbgems/GEMS.active
     cd ${MRUBY_ROOT}
     make
     ./bin/mruby ${MRUBY_ROOT}/mrbgems/g/mruby-redis/example/redis.rb
+    ```
 
 ## redis.rb
 
