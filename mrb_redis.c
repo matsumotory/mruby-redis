@@ -85,9 +85,7 @@ mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
             , (void*) rc)
         )
     );
-    //struct redis_object_data *data = malloc(sizeof(struct redis_object_data));
 
-    //return mrb_obj_value(Data_Wrap_Struct(mrb, mrb_class_ptr(self), &redis_object_data_type, data));
     return self;
 }
 
@@ -252,15 +250,9 @@ mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self)
 void mrb_redis_init(mrb_state *mrb)
 {
     struct RClass *redis;
-    //struct RClass *redis_basic;
 
-    //redis = mrb_define_module(mrb, "Redis");
     redis = mrb_define_class(mrb, "Redis", mrb->object_class);
-    //MRB_SET_INSTANCE_TT(redis, MRB_TT_DATA);
 
-    //redis_basic = mrb_define_class_under(mrb, redis, "Basic", mrb->object_class);
-    //mrb_define_class_method(mrb, redis, "new", mrb_redis_connect, ARGS_OPT(2));
-    //mrb_define_class_method(mrb, redis, "open", mrb_redis_connect, ARGS_OPT(2));
     mrb_define_method(mrb, redis, "initialize", mrb_redis_connect, ARGS_ANY());
     mrb_define_method(mrb, redis, "set", mrb_redis_set, ARGS_ANY());
     mrb_define_method(mrb, redis, "get", mrb_redis_get, ARGS_ANY());
