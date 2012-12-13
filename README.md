@@ -2,12 +2,14 @@
 
 ## manual install
 
-    git clone git://github.com/matsumoto-r/mruby-redis.git
-    cd mruby-redis/src
-    make
-    cd ../example
-    make
-    ./tester redis.rb
+```bash
+git clone git://github.com/matsumoto-r/mruby-redis.git
+cd mruby-redis/src
+make
+cd ../example
+make
+```
+./tester redis.rb
 
 ## install by gems
 
