@@ -7,6 +7,6 @@
 #ifndef MRB_REDIS_H
 #define MRB_REDIS_H
 
-void mrb_redis_init(mrb_state *mrb);
+void mrb_mruby_redis_gem_init(mrb_state *mrb);
 
 #endif

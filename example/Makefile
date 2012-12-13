@@ -1,8 +1,8 @@
-MRUBY_ROOT = ../tmp/mruby
+MRUBY_ROOT = ../src/tmp/mruby
 MRUBY_LIB := $(MRUBY_ROOT)/lib/libmruby.a
-LDFLAGS = $(MRUBY_LIB) ../libmrb_redis.a  -lm -lhiredis
+LDFLAGS = $(MRUBY_LIB) ../src/libmrb_redis.a  -lm -lhiredis
 
-INCLUDES = -I$(MRUBY_ROOT)/include -I.. -I../../mruby-redis
+INCLUDES = -I$(MRUBY_ROOT)/include -I.. -I../../mruby-redis/src
 CFLAGS = $(INCLUDES) -O3 -g -Wall -Werror-implicit-function-declaration
 
 CC = gcc

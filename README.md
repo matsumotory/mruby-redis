@@ -1,14 +1,22 @@
 # redis class for mruby
 
-## install
+## manual install
 
     git clone git://github.com/matsumoto-r/mruby-redis.git
-    cd mruby-redis
+    cd mruby-redis/src
     make
-    cd example
+    cd ../example
     make
     ./tester redis.rb
 
+## install by gems
+
+    git clone git://github.com/matsumoto-r/mruby-redis.git
+    cp -pr mruby-redis ${MRUBY_ROOT}/mrbgems/g/.
+    echo mruby-redis >> ${MRUBY_ROOT}/mrbgems/GEMS.active
+    cd ${MRUBY_ROOT}
+    make
+    ./bin/mruby redis.rb
 
 ## redis.rb
 

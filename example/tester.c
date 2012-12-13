@@ -226,7 +226,7 @@ main(int argc, char **argv)
   }
 
   // redis calss init
-  mrb_redis_init(mrb);
+  mrb_mruby_redis_gem_init(mrb);
 
   n = parse_args(mrb, argc, argv, &args);
   if (n < 0 || (args.cmdline == NULL && args.rfp == NULL)) {

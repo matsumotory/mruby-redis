@@ -247,7 +247,7 @@ mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self)
     return mrb_nil_value();
 }
 
-void mrb_redis_init(mrb_state *mrb)
+void mrb_mruby_redis_gem_init(mrb_state *mrb)
 {
     struct RClass *redis;
 
