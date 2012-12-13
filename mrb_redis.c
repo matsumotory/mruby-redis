@@ -227,6 +227,17 @@ mrb_value mrb_redis_ltrim(mrb_state *mrb, mrb_value self)
     return  mrb_fixnum_value(integer);
 }
 
+mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self)
+{
+    mrb_value channel, msg;
+
+    mrb_get_args(mrb, "oo", &channel, &msg);
+    redisContext *rc = mrb_redis_get_context(mrb, self);
+    redisReply *rr = redisCommand(rc,"PUBLISH %s %s", RSTRING_PTR(channel), RSTRING_PTR(msg));
+    freeReplyObject(rr);
+
+    return  self;
+}
 mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self)
 {
     redisContext *rc;
@@ -262,6 +273,7 @@ void mrb_redis_init(mrb_state *mrb)
     mrb_define_method(mrb, redis, "lpush", mrb_redis_lpush, ARGS_OPT(2));
     mrb_define_method(mrb, redis, "lrange", mrb_redis_lrange, ARGS_ANY());
     mrb_define_method(mrb, redis, "ltrim", mrb_redis_ltrim, ARGS_ANY());
+    mrb_define_method(mrb, redis, "publish", mrb_redis_pub, ARGS_ANY());
     mrb_define_method(mrb, redis, "close", mrb_redis_close, ARGS_NONE());
     DONE;
 }

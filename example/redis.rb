@@ -58,4 +58,7 @@ if r["logs"].nil?
     puts "del success!"
 end
 
+puts "> redis publish :one hello"
+r.publish "one", "hello"
+
 r.close
