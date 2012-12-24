@@ -2,7 +2,6 @@ GEM := mruby-redis
 
 include $(MAKEFILE_4_GEM)
 
-CFLAGS += -I$(MRUBY_ROOT)/include
 MRUBY_CFLAGS += -I$(MRUBY_ROOT)/include
 MRUBY_LIBS += -lhiredis
 
