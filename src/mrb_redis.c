@@ -270,4 +270,8 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     DONE;
 }
 
+void mrb_mruby_redis_gem_final(mrb_state *mrb)
+{
+}
+
 //#endif
