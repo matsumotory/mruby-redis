@@ -199,7 +199,7 @@ mrb_value mrb_redis_lrange(mrb_state *mrb, mrb_value self)
     if (rr->type == REDIS_REPLY_ARRAY) {
         array = mrb_ary_new(mrb);
         for (i = 0; i < rr->elements; i++) {
-            mrb_ary_push(mrb, array, mrb_str_new2(mrb, rr->element[i]->str));
+            mrb_ary_push(mrb, array, mrb_str_new_cstr(mrb, rr->element[i]->str));
         }
     } else {
         freeReplyObject(rr);
