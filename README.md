@@ -1,26 +1,16 @@
 # redis class for mruby
 
-## manual install
+## install by mrbgems
+ - add conf.gem line to `build_config.rb`
+```ruby
+MRuby::Build.new do |conf|
 
-```bash
-git clone git://github.com/matsumoto-r/mruby-redis.git
-cd mruby-redis/src
-make
-cd ../example
-make
+    # ... (snip) ...
+
+    conf.gem :git => 'https://github.com/matsumoto-r/mruby-redis.git'
+end
 ```
-./tester redis.rb
 
-## install by gems
-
-```bash
-git clone git://github.com/matsumoto-r/mruby-redis.git
-cp -pr mruby-redis ${MRUBY_ROOT}/mrbgems/g/.
-echo mruby-redis >> ${MRUBY_ROOT}/mrbgems/GEMS.active
-cd ${MRUBY_ROOT}
-make
-./bin/mruby ${MRUBY_ROOT}/mrbgems/g/mruby-redis/example/redis.rb
-```
 
 ## redis.rb
 
