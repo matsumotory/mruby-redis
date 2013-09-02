@@ -89,6 +89,23 @@ mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
     return self;
 }
 
+mrb_value mrb_redis_select(mrb_state *mrb, mrb_value self)
+{
+    mrb_value database;
+
+    mrb_get_args(mrb, "o", &database);
+    redisContext *rc = mrb_redis_get_context(mrb, self);
+
+    if (mrb_type(database) != MRB_TT_FIXNUM) {
+      mrb_raisef(mrb, E_TYPE_ERROR, "type mismatch: %S given", database);
+    }
+
+    redisReply *rs = redisCommand(rc, "SELECT %d", mrb_fixnum(database));
+    freeReplyObject(rs);
+
+    return  self;
+}
+
 mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
 {
     mrb_value key, val;
@@ -254,6 +271,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     redis = mrb_define_class(mrb, "Redis", mrb->object_class);
 
     mrb_define_method(mrb, redis, "initialize", mrb_redis_connect, ARGS_ANY());
+    mrb_define_method(mrb, redis, "select", mrb_redis_select, ARGS_REQ(1));
     mrb_define_method(mrb, redis, "set", mrb_redis_set, ARGS_ANY());
     mrb_define_method(mrb, redis, "get", mrb_redis_get, ARGS_ANY());
     mrb_define_method(mrb, redis, "[]=", mrb_redis_set, ARGS_ANY());

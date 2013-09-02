@@ -1,9 +1,13 @@
-host    = "127.0.0.1"
-port    = 6379
-key     = "hoge"
+host     = "127.0.0.1"
+port     = 6379
+key      = "hoge"
+database = 0
 
 puts "> redis connect #{host}: #{port.to_s}"
 r = Redis.new host, port
+
+puts "> redis select: #{database}"
+r.select database
 
 puts "> redis set #{key} 200"
 r.set key, "200"
