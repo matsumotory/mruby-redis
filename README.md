@@ -41,6 +41,9 @@ r[key] =  "fuga"
 puts "> redis get #{key}"
 puts "#{key}: #{r.get key}"
 
+puts "> redis randomkey"
+r.randomkey
+
 puts "> redis del #{key}"
 r.del key
 
@@ -98,6 +101,8 @@ hoge: 200
 > redis set hoge fuga
 > redis get hoge
 hoge: fuga
+> redis randomkey
+hoge
 > redis del hoge
 del success!
 > redis incr hoge

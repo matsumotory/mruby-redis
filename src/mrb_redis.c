@@ -136,6 +136,22 @@ mrb_value mrb_redis_get(mrb_state *mrb, mrb_value self)
     }
 }
 
+mrb_value mrb_redis_randomkey (mrb_state *mrb, mrb_value self)
+{
+    char *val;
+
+    redisContext *rc = mrb_redis_get_context(mrb, self);
+    redisReply *rs = redisCommand(rc, "RANDOMKEY");
+    if (rs->type == REDIS_REPLY_STRING) {
+        val = strdup(rs->str);
+        freeReplyObject(rs);
+        return mrb_str_new(mrb, val, strlen(val));
+    } else {
+        freeReplyObject(rs);
+        return mrb_nil_value();
+    }
+}
+
 mrb_value mrb_redis_del(mrb_state *mrb, mrb_value self)
 {
     mrb_value key;
@@ -274,6 +290,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     mrb_define_method(mrb, redis, "select", mrb_redis_select, ARGS_REQ(1));
     mrb_define_method(mrb, redis, "set", mrb_redis_set, ARGS_ANY());
     mrb_define_method(mrb, redis, "get", mrb_redis_get, ARGS_ANY());
+    mrb_define_method(mrb, redis, "randomkey", mrb_redis_randomkey, ARGS_NONE());
     mrb_define_method(mrb, redis, "[]=", mrb_redis_set, ARGS_ANY());
     mrb_define_method(mrb, redis, "[]", mrb_redis_get, ARGS_ANY());
     mrb_define_method(mrb, redis, "del", mrb_redis_del, ARGS_ANY());
