@@ -272,6 +272,67 @@ mrb_value mrb_redis_ltrim(mrb_state *mrb, mrb_value self)
     return  mrb_fixnum_value(integer);
 }
 
+mrb_value mrb_redis_zadd(mrb_state *mrb, mrb_value self)
+{
+    mrb_value key, member;
+    mrb_float score;
+
+    mrb_get_args(mrb, "ofo", &key, &score, &member);
+    redisContext *rc = mrb_redis_get_context(mrb, self);
+    redisReply *rs = redisCommand(rc, "ZADD %s %f %s", RSTRING_PTR(key), score, RSTRING_PTR(member));
+    freeReplyObject(rs);
+
+    return  self;
+}
+
+mrb_value mrb_redis_basic_zrange(mrb_state *mrb, mrb_value self, const char *cmd)
+{
+    int i;
+    mrb_value list, array;
+    mrb_int arg1, arg2;
+
+    mrb_get_args(mrb, "oii", &list, &arg1, &arg2);
+    redisContext *rc = mrb_redis_get_context(mrb, self);
+    redisReply *rr = redisCommand(rc, "%s %s %d %d", cmd, RSTRING_PTR(list), arg1, arg2);
+    if (rr->type == REDIS_REPLY_ARRAY) {
+        array = mrb_ary_new(mrb);
+        for (i = 0; i < rr->elements; i++) {
+            mrb_ary_push(mrb, array, mrb_str_new_cstr(mrb, rr->element[i]->str));
+        }
+    } else {
+        freeReplyObject(rr);
+        return mrb_nil_value();
+    }
+
+    freeReplyObject(rr);
+
+    return array;
+}
+
+mrb_value mrb_redis_zrange(mrb_state *mrb, mrb_value self, const char *cmd)
+{
+    return mrb_redis_basic_zrange(mrb, self, "ZRANGE");
+}
+
+mrb_value mrb_redis_zrevrange(mrb_state *mrb, mrb_value self, const char *cmd)
+{
+    return mrb_redis_basic_zrange(mrb, self, "ZREVRANGE");
+}
+
+mrb_value mrb_redis_zrank(mrb_state *mrb, mrb_value self)
+{
+    mrb_value key, member;
+    mrb_int integer;
+
+    mrb_get_args(mrb, "oo", &key, &member);
+    redisContext *rc = mrb_redis_get_context(mrb, self);
+    redisReply *rr = redisCommand(rc, "ZRANK %s %s", RSTRING_PTR(key), RSTRING_PTR(member));
+    integer = rr->integer;
+    freeReplyObject(rr);
+
+    return  mrb_fixnum_value(integer);
+}
+
 mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self)
 {
     mrb_value channel, msg;
@@ -316,6 +377,10 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     mrb_define_method(mrb, redis, "lpush", mrb_redis_lpush, ARGS_OPT(2));
     mrb_define_method(mrb, redis, "lrange", mrb_redis_lrange, ARGS_ANY());
     mrb_define_method(mrb, redis, "ltrim", mrb_redis_ltrim, ARGS_ANY());
+    mrb_define_method(mrb, redis, "zadd", mrb_redis_zadd, ARGS_REQ(3));
+    mrb_define_method(mrb, redis, "zrange", mrb_redis_zrange, ARGS_REQ(3));
+    mrb_define_method(mrb, redis, "zrevrange", mrb_redis_zrevrange, ARGS_REQ(3));
+    mrb_define_method(mrb, redis, "zrank", mrb_redis_zrank, ARGS_REQ(2));
     mrb_define_method(mrb, redis, "publish", mrb_redis_pub, ARGS_ANY());
     mrb_define_method(mrb, redis, "close", mrb_redis_close, ARGS_NONE());
     DONE;
