@@ -1,5 +1,5 @@
 # mruby-redis   [![Build Status](https://travis-ci.org/matsumoto-r/mruby-redis.png?branch=master)](https://travis-ci.org/matsumoto-r/mruby-redis)
-redis client binding by mruby. Redis is an open source, BSD licensed, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets. Plese see [redis official website](http://redis.io/).
+[Hiredis](https://github.com/redis/hiredis) binding by mruby. Hiredis is a minimalistic C client library for the Redis database. Redis is an open source, BSD licensed, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets. Plese see [redis official website](http://redis.io/).
 ## install by mrbgems
  - add conf.gem line to `build_config.rb`
 ```ruby
