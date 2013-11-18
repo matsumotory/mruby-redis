@@ -1,5 +1,8 @@
 # mruby-redis   [![Build Status](https://travis-ci.org/matsumoto-r/mruby-redis.png?branch=master)](https://travis-ci.org/matsumoto-r/mruby-redis)
 [Hiredis](https://github.com/redis/hiredis) binding by mruby. Hiredis is a minimalistic C client library for the Redis database. Redis is an open source, BSD licensed, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets. Plese see [redis official website](http://redis.io/).
+
+__If Redis is over performance or over capacity, I recommend [mruby-vedis](https://github.com/matsumoto-r/mruby-vedis).__ vedis is an embeddable datastore C library built with over 70 commands similar in concept to Redis but without the networking layer since Vedis run in the same process of the host application.
+Please see [vedis pages](http://vedis.symisc.net/index.html).
 ## install by mrbgems
  - add conf.gem line to `build_config.rb`
 ```ruby
