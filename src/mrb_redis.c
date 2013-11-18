@@ -42,11 +42,11 @@
 
 //#ifdef ENABLE_REDIS
 //static struct mrb_data_type redis_object_data_type;
-//static struct redis_object_data { int hoge; }; 
+//static struct redis_object_data { int hoge; };
 
 static void redisContext_free(mrb_state *mrb, void *p)
 {
-    redisFree(p);    
+    redisFree(p);
 }
 
 static const struct mrb_data_type redisContext_type = {
@@ -134,6 +134,20 @@ mrb_value mrb_redis_get(mrb_state *mrb, mrb_value self)
         freeReplyObject(rs);
         return mrb_nil_value();
     }
+}
+
+mrb_value mrb_redis_exists(mrb_state *mrb, mrb_value self)
+{
+    mrb_value key;
+    mrb_int counter;
+
+    mrb_get_args(mrb, "o", &key);
+    redisContext *rc = mrb_redis_get_context(mrb, self);
+    redisReply *rr = redisCommand(rc, "EXISTS %s", RSTRING_PTR(key));
+    counter = rr->integer;
+    freeReplyObject(rr);
+
+    return counter ? mrb_true_value() : mrb_false_value();
 }
 
 mrb_value mrb_redis_randomkey (mrb_state *mrb, mrb_value self)
@@ -269,6 +283,7 @@ mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self)
 
     return  self;
 }
+
 mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self)
 {
     redisContext *rc;
@@ -290,6 +305,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     mrb_define_method(mrb, redis, "select", mrb_redis_select, ARGS_REQ(1));
     mrb_define_method(mrb, redis, "set", mrb_redis_set, ARGS_ANY());
     mrb_define_method(mrb, redis, "get", mrb_redis_get, ARGS_ANY());
+    mrb_define_method(mrb, redis, "exists?", mrb_redis_exists, ARGS_REQ(1));
     mrb_define_method(mrb, redis, "randomkey", mrb_redis_randomkey, ARGS_NONE());
     mrb_define_method(mrb, redis, "[]=", mrb_redis_set, ARGS_ANY());
     mrb_define_method(mrb, redis, "[]", mrb_redis_get, ARGS_ANY());

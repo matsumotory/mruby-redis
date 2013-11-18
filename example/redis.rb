@@ -15,6 +15,12 @@ r.set key, "200"
 puts "> redis get #{key}"
 puts "#{key}: #{r[key]}"
 
+puts "> redis exists #{key}"
+puts "#{r.exists?(key)}"
+
+puts "> redis exists fuga"
+puts "#{r.exists?("fuga")}"
+
 puts "> redis set #{key} fuga"
 r[key] =  "fuga"
 
