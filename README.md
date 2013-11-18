@@ -1,4 +1,4 @@
-# redis class for mruby
+# redis class for mruby   [![Build Status](https://travis-ci.org/matsumoto-r/mruby-redis.png?branch=master)](https://travis-ci.org/matsumoto-r/mruby-redis)
 
 ## install by mrbgems
  - add conf.gem line to `build_config.rb`
