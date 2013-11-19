@@ -2,10 +2,12 @@ language: c
 compiler:
   - gcc
   - clang
+services:
+  - redis-server
 before_install:
-    - sudo apt-get -qq update
+  - sudo apt-get -qq update
 install:
-    - sudo apt-get -qq install rake bison git gperf redis-server libhiredis-dev
+  - sudo apt-get -qq install rake bison git gperf libhiredis-dev
 before_script:
   - cd ../
   - git clone https://github.com/mruby/mruby.git
