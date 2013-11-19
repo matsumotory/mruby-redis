@@ -5,57 +5,74 @@
 assert("Redis#set, Redis#get") do
   r = Redis.new "127.0.0.1", 6379
   r.set "hoge", "fuga"
-  assert_equal("fuga", r.get("hoge"))
+  ret = r.get "hoge"
+  r.close
+
+  assert_equal "fuga", ret
 end
 
 assert("Redis#[]=, Redis#[]") do
   r = Redis.new "127.0.0.1", 6379
   r["hoge"] = "fuga"
-  assert_equal("fuga", r["hoge"])
-end
+  ret = r["hoge"]
+  r.close
 
-assert("Redis#select") do
-  r = Redis.new "127.0.0.1", 6379
-  assert_equal(r, r.select(0))
+  assert_equal "fuga", ret
 end
 
 assert("Redis#exist?") do
   r = Redis.new "127.0.0.1", 6379
   r["hoge"] = "aaa"
-  assert_true(r.exists?("hoge"))
-  assert_false(r.exists?("fuga"))
+  ret1 = r.exists? "hoge"
+  ret2 = r.exists? "fuga"
+  r.close
+
+  assert_true ret1
+  assert_false ret2
 end
 
 assert("Redis#zadd, Redis#zrange") do
   r = Redis.new "127.0.0.1", 6379
-  r.del("hs")
-  r.zadd("hs", 80, "a")
-  r.zadd("hs", 50.1, "b")
-  r.zadd("hs", 60, "c")
-  assert_equal(["b", "c", "a"], r.zrange("hs", 0, -1))
+  r.del "hs"
+  r.zadd "hs", 80, "a"
+  r.zadd "hs", 50.1, "b"
+  r.zadd "hs", 60, "c"
+  ret = r.zrange "hs", 0, -1
+  r.close
+
+  assert_equal ["b", "c", "a"], ret
 end
 
 assert("Redis#zrevrange") do
   r = Redis.new "127.0.0.1", 6379
-  r.del("hs")
-  r.zadd("hs", 80, "a")
-  r.zadd("hs", 50.1, "b")
-  r.zadd("hs", 60, "c")
-  assert_equal(["a", "c", "b"], r.zrevrange("hs", 0, -1))
+  r.del "hs"
+  r.zadd "hs", 80, "a"
+  r.zadd "hs", 50.1, "b"
+  r.zadd "hs", 60, "c"
+  ret = r.zrevrange "hs", 0, -1
+  r.close
+
+  assert_equal ["a", "c", "b"], ret
 end
 
 assert("Redis#zrank") do
   r = Redis.new "127.0.0.1", 6379
-  r.del("hs")
-  r.zadd("hs", 80, "a")
-  r.zadd("hs", 50.1, "b")
-  r.zadd("hs", 60, "c")
-  assert_equal(0, r.zrank("hs", "b"))
-  assert_equal(1, r.zrank("hs", "c"))
-  assert_equal(2, r.zrank("hs", "a"))
+  r.del "hs"
+  r.zadd "hs", 80, "a"
+  r.zadd "hs", 50.1, "b"
+  r.zadd "hs", 60, "c"
+  ret1 = r.zrank "hs", "b"
+  ret2 = r.zrank "hs", "c"
+  ret3 = r.zrank "hs", "a"
+  r.close
+
+  assert_equal 0, ret1
+  assert_equal 1, ret2
+  assert_equal 2, ret3
 end
 
 # TODO: Add test
+# - select
 # - randomkey
 # - del
 # - incr
