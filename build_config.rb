@@ -13,7 +13,7 @@ MRuby::Build.new do |conf|
 
   # include the default GEMs
   conf.gembox 'default'
-  conf.gem :github => 'matsumoto-r/mruby-redis', :branch => 'master'
+  conf.gem '../mruby-redis'
   
 
   # C compiler settings
