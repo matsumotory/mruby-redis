@@ -285,7 +285,7 @@ mrb_value mrb_redis_zadd(mrb_state *mrb, mrb_value self)
     return  self;
 }
 
-mrb_value mrb_redis_basic_zrange(mrb_state *mrb, mrb_value self)
+mrb_value mrb_redis_basic_zrange(mrb_state *mrb, mrb_value self, const char *cmd)
 {
     int i;
     mrb_value list, array;
@@ -309,12 +309,12 @@ mrb_value mrb_redis_basic_zrange(mrb_state *mrb, mrb_value self)
     return array;
 }
 
-mrb_value mrb_redis_zrange(mrb_state *mrb, mrb_value self, const char *cmd)
+mrb_value mrb_redis_zrange(mrb_state *mrb, mrb_value self)
 {
     return mrb_redis_basic_zrange(mrb, self, "ZRANGE");
 }
 
-mrb_value mrb_redis_zrevrange(mrb_state *mrb, mrb_value self, const char *cmd)
+mrb_value mrb_redis_zrevrange(mrb_state *mrb, mrb_value self)
 {
     return mrb_redis_basic_zrange(mrb, self, "ZREVRANGE");
 }
