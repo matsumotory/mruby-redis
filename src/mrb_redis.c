@@ -285,7 +285,7 @@ mrb_value mrb_redis_zadd(mrb_state *mrb, mrb_value self)
     return  self;
 }
 
-mrb_value mrb_redis_basic_zrange(mrb_state *mrb, mrb_value self, const char *cmd)
+mrb_value mrb_redis_basic_zrange(mrb_state *mrb, mrb_value self)
 {
     int i;
     mrb_value list, array;
