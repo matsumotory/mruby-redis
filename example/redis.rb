@@ -76,6 +76,9 @@ r.zadd "hs", 50.1, "b"
 puts "> redis zadd hs 60 c"
 r.zadd "hs", 60, "c"
 
+puts "> redis zscore hs a"
+puts r.zscore "hs", "a"
+
 puts "> redis zrange hs 0 -1"
 puts r.zrange "hs", 0, -1
 

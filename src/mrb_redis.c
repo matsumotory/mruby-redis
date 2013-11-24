@@ -343,6 +343,19 @@ mrb_value mrb_redis_zrevrank(mrb_state *mrb, mrb_value self)
     return mrb_redis_basic_zrank(mrb, self, "ZREVRANK");
 }
 
+mrb_value mrb_redis_zscore(mrb_state *mrb, mrb_value self)
+{
+    mrb_value key, member, score;
+
+    mrb_get_args(mrb, "oo", &key, &member);
+    redisContext *rc = mrb_redis_get_context(mrb, self);
+    redisReply *rr = redisCommand(rc, "ZSCORE %s %s", RSTRING_PTR(key), RSTRING_PTR(member));
+    score = mrb_str_new_cstr(mrb, rr->str);
+    freeReplyObject(rr);
+
+    return score;
+}
+
 mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self)
 {
     mrb_value channel, msg;
@@ -392,6 +405,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     mrb_define_method(mrb, redis, "zrevrange", mrb_redis_zrevrange, ARGS_REQ(3));
     mrb_define_method(mrb, redis, "zrank", mrb_redis_zrank, ARGS_REQ(2));
     mrb_define_method(mrb, redis, "zrevrank", mrb_redis_zrevrank, ARGS_REQ(2));
+    mrb_define_method(mrb, redis, "zscore", mrb_redis_zscore, ARGS_REQ(2));
     mrb_define_method(mrb, redis, "publish", mrb_redis_pub, ARGS_ANY());
     mrb_define_method(mrb, redis, "close", mrb_redis_close, ARGS_NONE());
     DONE;
