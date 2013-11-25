@@ -319,18 +319,28 @@ mrb_value mrb_redis_zrevrange(mrb_state *mrb, mrb_value self)
     return mrb_redis_basic_zrange(mrb, self, "ZREVRANGE");
 }
 
-mrb_value mrb_redis_zrank(mrb_state *mrb, mrb_value self)
+mrb_value mrb_redis_basic_zrank(mrb_state *mrb, mrb_value self, const char* cmd)
 {
     mrb_value key, member;
-    mrb_int integer;
+    mrb_int rank;
 
     mrb_get_args(mrb, "oo", &key, &member);
     redisContext *rc = mrb_redis_get_context(mrb, self);
-    redisReply *rr = redisCommand(rc, "ZRANK %s %s", RSTRING_PTR(key), RSTRING_PTR(member));
-    integer = rr->integer;
+    redisReply *rr = redisCommand(rc, "%s %s %s", cmd, RSTRING_PTR(key), RSTRING_PTR(member));
+    rank = rr->integer;
     freeReplyObject(rr);
 
-    return  mrb_fixnum_value(integer);
+    return mrb_fixnum_value(rank);
+}
+
+mrb_value mrb_redis_zrank(mrb_state *mrb, mrb_value self)
+{
+    return mrb_redis_basic_zrank(mrb, self, "ZRANK");
+}
+
+mrb_value mrb_redis_zrevrank(mrb_state *mrb, mrb_value self)
+{
+    return mrb_redis_basic_zrank(mrb, self, "ZREVRANK");
 }
 
 mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self)
@@ -381,6 +391,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     mrb_define_method(mrb, redis, "zrange", mrb_redis_zrange, ARGS_REQ(3));
     mrb_define_method(mrb, redis, "zrevrange", mrb_redis_zrevrange, ARGS_REQ(3));
     mrb_define_method(mrb, redis, "zrank", mrb_redis_zrank, ARGS_REQ(2));
+    mrb_define_method(mrb, redis, "zrevrank", mrb_redis_zrevrank, ARGS_REQ(2));
     mrb_define_method(mrb, redis, "publish", mrb_redis_pub, ARGS_ANY());
     mrb_define_method(mrb, redis, "close", mrb_redis_close, ARGS_NONE());
     DONE;

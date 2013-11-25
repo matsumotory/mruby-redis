@@ -67,6 +67,45 @@ if r["logs"].nil?
     puts "del success!"
 end
 
+puts "> redis zadd hs 80 a"
+r.zadd "hs", 80, "a"
+
+puts "> redis zadd hs 50.1 b"
+r.zadd "hs", 50.1, "b"
+
+puts "> redis zadd hs 60 c"
+r.zadd "hs", 60, "c"
+
+puts "> redis zrange hs 0 -1"
+puts r.zrange "hs", 0, -1
+
+puts "> redis zrank hs b"
+puts r.zrank "hs", "b"
+
+puts "> redis zrank hs c"
+puts r.zrank "hs", "c"
+
+puts "> redis zrank hs a"
+puts r.zrank "hs", "a"
+
+puts ">redis zrevrange hs 0 -1"
+puts r.zrevrange "hs", 0, -1
+
+puts ">redis zrevrank hs a"
+puts r.zrevrank "hs", "a"
+
+puts ">redis zrevrank hs c"
+puts r.zrevrank "hs", "c"
+
+puts ">redis zrevrank hs b"
+puts r.zrevrank "hs", "b"
+
+puts "> redis del hs"
+r.del "hs"
+if r["hs"].nil?
+    puts "del success!"
+end
+
 puts "> redis publish :one hello"
 r.publish "one", "hello"
 
