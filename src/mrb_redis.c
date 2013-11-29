@@ -58,7 +58,7 @@ static redisContext *mrb_redis_get_context(mrb_state *mrb,  mrb_value self)
     redisContext *c;
     mrb_value context;
 
-    context = mrb_iv_get(mrb, self, mrb_intern(mrb, "redis_c"));
+    context = mrb_iv_get(mrb, self, mrb_intern(mrb, "redis_c", 7));
     Data_Get_Struct(mrb, context, &redisContext_type, c);
     if (!c)
         mrb_raise(mrb, E_RUNTIME_ERROR, "redisContext get from mrb_iv_get redis_c failed");
@@ -78,7 +78,7 @@ mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
 
     mrb_iv_set(mrb
         , self
-        , mrb_intern(mrb, "redis_c")
+        , mrb_intern(mrb, "redis_c", 7)
         , mrb_obj_value(Data_Wrap_Struct(mrb
             , mrb->object_class
             , &redisContext_type
@@ -373,7 +373,7 @@ mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self)
     redisContext *rc;
     mrb_value context;
 
-    context = mrb_iv_get(mrb, self, mrb_intern(mrb, "redis_c"));
+    context = mrb_iv_get(mrb, self, mrb_intern(mrb, "redis_c", 7));
     Data_Get_Struct(mrb, context, &redisContext_type, rc);
 
     return mrb_nil_value();
