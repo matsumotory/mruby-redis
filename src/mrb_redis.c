@@ -40,10 +40,6 @@
 
 #define DONE mrb_gc_arena_restore(mrb, 0);
 
-//#ifdef ENABLE_REDIS
-//static struct mrb_data_type redis_object_data_type;
-//static struct redis_object_data { int hoge; };
-
 static void redisContext_free(mrb_state *mrb, void *p)
 {
     redisFree(p);
@@ -53,39 +49,24 @@ static const struct mrb_data_type redisContext_type = {
     "redisContext", redisContext_free,
 };
 
-static redisContext *mrb_redis_get_context(mrb_state *mrb,  mrb_value self)
-{
-    redisContext *c;
-    mrb_value context;
-
-    context = mrb_iv_get(mrb, self, mrb_intern(mrb, "redis_c", 7));
-    Data_Get_Struct(mrb, context, &redisContext_type, c);
-    if (!c)
-        mrb_raise(mrb, E_RUNTIME_ERROR, "redisContext get from mrb_iv_get redis_c failed");
-
-    return c;
-}
-
 mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
 {
     mrb_value host, port;
+    redisContext *rc = (redisContext *)DATA_PTR(self);
+    if (rc) {
+        mrb_free(mrb, rc);
+    }
+    DATA_TYPE(self) = &redisContext_type;
+    DATA_PTR(self) = NULL;
 
     mrb_get_args(mrb, "oo", &host, &port);
 
-    redisContext *rc = redisConnect(RSTRING_PTR(host), mrb_fixnum(port));
+    rc = redisConnect(RSTRING_PTR(host), mrb_fixnum(port));
     if (rc->err)
         mrb_raise(mrb, E_RUNTIME_ERROR, "redis connection faild.");
 
-    mrb_iv_set(mrb
-        , self
-        , mrb_intern(mrb, "redis_c", 7)
-        , mrb_obj_value(Data_Wrap_Struct(mrb
-            , mrb->object_class
-            , &redisContext_type
-            , (void*) rc)
-        )
-    );
-
+    DATA_PTR(self) = rc;
+    
     return self;
 }
 
@@ -93,8 +74,8 @@ mrb_value mrb_redis_select(mrb_state *mrb, mrb_value self)
 {
     mrb_value database;
 
+    redisContext *rc = DATA_PTR(self);
     mrb_get_args(mrb, "o", &database);
-    redisContext *rc = mrb_redis_get_context(mrb, self);
 
     if (mrb_type(database) != MRB_TT_FIXNUM) {
       mrb_raisef(mrb, E_TYPE_ERROR, "type mismatch: %S given", database);
@@ -109,9 +90,9 @@ mrb_value mrb_redis_select(mrb_state *mrb, mrb_value self)
 mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
 {
     mrb_value key, val;
+    redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oo", &key, &val);
-    redisContext *rc = mrb_redis_get_context(mrb, self);
     redisReply *rs = redisCommand(rc,"SET %s %s", RSTRING_PTR(key), RSTRING_PTR(val));
     freeReplyObject(rs);
 
@@ -122,9 +103,9 @@ mrb_value mrb_redis_get(mrb_state *mrb, mrb_value self)
 {
     mrb_value key;
     char *val;
+    redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "o", &key);
-    redisContext *rc = mrb_redis_get_context(mrb, self);
     redisReply *rs = redisCommand(rc, "GET %s", RSTRING_PTR(key));
     if (rs->type == REDIS_REPLY_STRING) {
         val = strdup(rs->str);
@@ -140,9 +121,9 @@ mrb_value mrb_redis_exists(mrb_state *mrb, mrb_value self)
 {
     mrb_value key;
     mrb_int counter;
+    redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "o", &key);
-    redisContext *rc = mrb_redis_get_context(mrb, self);
     redisReply *rr = redisCommand(rc, "EXISTS %s", RSTRING_PTR(key));
     counter = rr->integer;
     freeReplyObject(rr);
@@ -153,8 +134,8 @@ mrb_value mrb_redis_exists(mrb_state *mrb, mrb_value self)
 mrb_value mrb_redis_randomkey (mrb_state *mrb, mrb_value self)
 {
     char *val;
+    redisContext *rc = DATA_PTR(self);
 
-    redisContext *rc = mrb_redis_get_context(mrb, self);
     redisReply *rs = redisCommand(rc, "RANDOMKEY");
     if (rs->type == REDIS_REPLY_STRING) {
         val = strdup(rs->str);
@@ -169,9 +150,9 @@ mrb_value mrb_redis_randomkey (mrb_state *mrb, mrb_value self)
 mrb_value mrb_redis_del(mrb_state *mrb, mrb_value self)
 {
     mrb_value key;
+    redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "o", &key);
-    redisContext *rc = mrb_redis_get_context(mrb, self);
     redisReply *rs = redisCommand(rc, "DEL %s", RSTRING_PTR(key));
     freeReplyObject(rs);
 
@@ -182,9 +163,9 @@ mrb_value mrb_redis_incr(mrb_state *mrb, mrb_value self)
 {
     mrb_value key;
     mrb_int counter;
+    redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "o", &key);
-    redisContext *rc = mrb_redis_get_context(mrb, self);
     redisReply *rr = redisCommand(rc, "INCR %s", RSTRING_PTR(key));
     counter = rr->integer;
     freeReplyObject(rr);
@@ -196,9 +177,9 @@ mrb_value mrb_redis_decr(mrb_state *mrb, mrb_value self)
 {
     mrb_value key;
     mrb_int counter;
+    redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "o", &key);
-    redisContext *rc = mrb_redis_get_context(mrb, self);
     redisReply *rr = redisCommand(rc, "DECR %s", RSTRING_PTR(key));
     counter = rr->integer;
     freeReplyObject(rr);
@@ -210,9 +191,9 @@ mrb_value mrb_redis_rpush(mrb_state *mrb, mrb_value self)
 {
     mrb_value key, val;
     mrb_int integer;
+    redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oo", &key, &val);
-    redisContext *rc = mrb_redis_get_context(mrb, self);
     redisReply *rr = redisCommand(rc,"RPUSH %s %s", RSTRING_PTR(key), RSTRING_PTR(val));
     integer = rr->integer;
     freeReplyObject(rr);
@@ -224,9 +205,9 @@ mrb_value mrb_redis_lpush(mrb_state *mrb, mrb_value self)
 {
     mrb_value key, val;
     mrb_int integer;
+    redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oo", &key, &val);
-    redisContext *rc = mrb_redis_get_context(mrb, self);
     redisReply *rr = redisCommand(rc,"LPUSH %s %s", RSTRING_PTR(key), RSTRING_PTR(val));
     integer = rr->integer;
     freeReplyObject(rr);
@@ -239,9 +220,9 @@ mrb_value mrb_redis_lrange(mrb_state *mrb, mrb_value self)
     int i;
     mrb_value list, array;
     mrb_int arg1, arg2;
+    redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oii", &list, &arg1, &arg2);
-    redisContext *rc = mrb_redis_get_context(mrb, self);
     redisReply *rr = redisCommand(rc,"LRANGE %s %d %d", RSTRING_PTR(list), arg1, arg2);
     if (rr->type == REDIS_REPLY_ARRAY) {
         array = mrb_ary_new(mrb);
@@ -262,9 +243,9 @@ mrb_value mrb_redis_ltrim(mrb_state *mrb, mrb_value self)
 {
     mrb_value list;
     mrb_int arg1, arg2, integer;
+    redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oii", &list, &arg1, &arg2);
-    redisContext *rc = mrb_redis_get_context(mrb, self);
     redisReply *rr = redisCommand(rc,"LTRIM %s %d %d", RSTRING_PTR(list), arg1, arg2);
     integer = rr->integer;
     freeReplyObject(rr);
@@ -276,9 +257,9 @@ mrb_value mrb_redis_zadd(mrb_state *mrb, mrb_value self)
 {
     mrb_value key, member;
     mrb_float score;
+    redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "ofo", &key, &score, &member);
-    redisContext *rc = mrb_redis_get_context(mrb, self);
     redisReply *rs = redisCommand(rc, "ZADD %s %f %s", RSTRING_PTR(key), score, RSTRING_PTR(member));
     freeReplyObject(rs);
 
@@ -290,9 +271,9 @@ mrb_value mrb_redis_basic_zrange(mrb_state *mrb, mrb_value self, const char *cmd
     int i;
     mrb_value list, array;
     mrb_int arg1, arg2;
+    redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oii", &list, &arg1, &arg2);
-    redisContext *rc = mrb_redis_get_context(mrb, self);
     redisReply *rr = redisCommand(rc, "%s %s %d %d", cmd, RSTRING_PTR(list), arg1, arg2);
     if (rr->type == REDIS_REPLY_ARRAY) {
         array = mrb_ary_new(mrb);
@@ -323,9 +304,9 @@ mrb_value mrb_redis_basic_zrank(mrb_state *mrb, mrb_value self, const char* cmd)
 {
     mrb_value key, member;
     mrb_int rank;
+    redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oo", &key, &member);
-    redisContext *rc = mrb_redis_get_context(mrb, self);
     redisReply *rr = redisCommand(rc, "%s %s %s", cmd, RSTRING_PTR(key), RSTRING_PTR(member));
     rank = rr->integer;
     freeReplyObject(rr);
@@ -346,9 +327,9 @@ mrb_value mrb_redis_zrevrank(mrb_state *mrb, mrb_value self)
 mrb_value mrb_redis_zscore(mrb_state *mrb, mrb_value self)
 {
     mrb_value key, member, score;
+    redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oo", &key, &member);
-    redisContext *rc = mrb_redis_get_context(mrb, self);
     redisReply *rr = redisCommand(rc, "ZSCORE %s %s", RSTRING_PTR(key), RSTRING_PTR(member));
     score = mrb_str_new_cstr(mrb, rr->str);
     freeReplyObject(rr);
@@ -359,9 +340,9 @@ mrb_value mrb_redis_zscore(mrb_state *mrb, mrb_value self)
 mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self)
 {
     mrb_value channel, msg;
+    redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oo", &channel, &msg);
-    redisContext *rc = mrb_redis_get_context(mrb, self);
     redisReply *rr = redisCommand(rc,"PUBLISH %s %s", RSTRING_PTR(channel), RSTRING_PTR(msg));
     freeReplyObject(rr);
 
@@ -370,11 +351,9 @@ mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self)
 
 mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self)
 {
-    redisContext *rc;
-    mrb_value context;
+    redisContext *rc = DATA_PTR(self);
 
-    context = mrb_iv_get(mrb, self, mrb_intern(mrb, "redis_c", 7));
-    Data_Get_Struct(mrb, context, &redisContext_type, rc);
+    redisFree(rc);
 
     return mrb_nil_value();
 }
