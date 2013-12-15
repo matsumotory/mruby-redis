@@ -93,6 +93,27 @@ if r["logs"].nil?
     puts "del success!"
 end
 
+puts "> redis hset myhash field1 a"
+r.hset "myhash", "field1", "a"
+
+puts "> redis hset myhash field2 b"
+r.hset "myhash", "field2", "b"
+
+puts "> redis hget myhash field1"
+puts r.hget "myhash", "field1"
+
+puts "> redis hget myhash field2"
+puts r.hget "myhash", "field2"
+
+puts "> redis hdel myhash field1"
+puts r.hdel "myhash", "field1"
+
+puts "> redis del myhash"
+
+if r["myhash"].nil?
+    puts "del success!"
+end
+
 puts "> redis zadd hs 80 a"
 r.zadd "hs", 80, "a"
 
@@ -177,6 +198,16 @@ hoge decr: 0
 > redis lrange 0 -1
 ["error2", "error1"]
 > redis del logs
+del success!
+> redis hset myhash field1 a
+> redis hset myhash field2 b
+> redis hget myhash field1
+a
+> redis hget myhash field2
+b
+> redis hdel myhash field1
+1
+> redis del myhash
 del success!
 > redis zadd hs 80 a
 > redis zadd hs 50.1 b
