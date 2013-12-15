@@ -66,7 +66,7 @@ mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
         mrb_raise(mrb, E_RUNTIME_ERROR, "redis connection faild.");
 
     DATA_PTR(self) = rc;
-    
+
     return self;
 }
 
@@ -253,6 +253,49 @@ mrb_value mrb_redis_ltrim(mrb_state *mrb, mrb_value self)
     return  mrb_fixnum_value(integer);
 }
 
+mrb_value mrb_redis_hset(mrb_state *mrb, mrb_value self) {
+    mrb_value key, field, val;
+    redisContext *rc = DATA_PTR(self);
+    mrb_int integer;
+
+    mrb_get_args(mrb, "ooo", &key, &field, &val);
+    redisReply *rs = redisCommand(rc, "HSET %s %s %s", RSTRING_PTR(key), RSTRING_PTR(field), RSTRING_PTR(val));
+    integer = rs->integer;
+    freeReplyObject(rs);
+
+    return integer ? mrb_true_value() : mrb_false_value();
+}
+
+mrb_value mrb_redis_hget(mrb_state *mrb, mrb_value self) {
+    mrb_value key, field;
+    char *val;
+    redisContext *rc = DATA_PTR(self);
+
+    mrb_get_args(mrb, "oo", &key, &field);
+    redisReply *rs = redisCommand(rc, "HGET %s %s", RSTRING_PTR(key), RSTRING_PTR(field));
+    if (rs->type == REDIS_REPLY_STRING) {
+        val = strdup(rs->str);
+        freeReplyObject(rs);
+        return mrb_str_new(mrb, val, strlen(val));
+    } else {
+        freeReplyObject(rs);
+        return mrb_nil_value();
+    }
+}
+
+mrb_value mrb_redis_hdel(mrb_state *mrb, mrb_value self) {
+    mrb_value key, val;
+    mrb_int integer;
+    redisContext *rc = DATA_PTR(self);
+
+    mrb_get_args(mrb, "oo", &key, &val);
+    redisReply *rr = redisCommand(rc,"HDEL %s %s", RSTRING_PTR(key), RSTRING_PTR(val));
+    integer = rr->integer;
+    freeReplyObject(rr);
+
+    return mrb_fixnum_value(integer);
+}
+
 mrb_value mrb_redis_zadd(mrb_state *mrb, mrb_value self)
 {
     mrb_value key, member;
@@ -379,6 +422,9 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     mrb_define_method(mrb, redis, "lpush", mrb_redis_lpush, ARGS_OPT(2));
     mrb_define_method(mrb, redis, "lrange", mrb_redis_lrange, ARGS_ANY());
     mrb_define_method(mrb, redis, "ltrim", mrb_redis_ltrim, ARGS_ANY());
+    mrb_define_method(mrb, redis, "hset", mrb_redis_hset, ARGS_REQ(3));
+    mrb_define_method(mrb, redis, "hget", mrb_redis_hget, ARGS_REQ(2));
+    mrb_define_method(mrb, redis, "hdel", mrb_redis_hdel, ARGS_REQ(2));
     mrb_define_method(mrb, redis, "zadd", mrb_redis_zadd, ARGS_REQ(3));
     mrb_define_method(mrb, redis, "zrange", mrb_redis_zrange, ARGS_REQ(3));
     mrb_define_method(mrb, redis, "zrevrange", mrb_redis_zrevrange, ARGS_REQ(3));
