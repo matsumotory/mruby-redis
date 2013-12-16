@@ -71,6 +71,22 @@ end
 #  assert_equal 1, ret2
 #  assert_equal 2, ret3
 #end
+#
+#assert("Redis#zscore") do
+#  r = Redis.new "127.0.0.1", 6379
+#  r.del "hs"
+#  r.zadd "hs", 80, "a"
+#  r.zadd "hs", 50.1, "b"
+#  r.zadd "hs", 60, "c"
+#  ret_a = r.zscore "hs", "a"
+##  ret_b = r.zscore "hs", "b"
+#  ret_c = r.zscore "hs", "c"
+#  r.close
+#
+#  assert_equal "80", ret_a
+##  assert_equal "50.1", ret_b      # value is not 50.1 in mruby and redis-cli
+#  assert_equal "60", ret_c
+#end
 
 # TODO: Add test
 # - select
