@@ -31,6 +31,29 @@ assert("Redis#exist?") do
   assert_false ret2
 end
 
+assert("Redis#hset", "Redis#hget") do
+  r = Redis.new "127.0.0.1", 6379
+  r.del "myhash"
+
+  ret_set_f1_a = r.hset "myhash", "field1", "a"
+  ret_get_f1_a = r.hget "myhash", "field1"
+  ret_set_f1_b = r.hset "myhash", "field1", "b"
+  ret_get_f1_b = r.hget "myhash", "field1"
+
+  r.hset "myhash", "field2", "c"
+  ret_get_f2 = r.hget "myhash", "field2"
+
+  r.close
+
+  assert_true ret_set_f1_a    # true if field is a new field in the hash and value was set.
+  assert_false ret_set_f1_b   # false if field already exists in the hash and the value was updated.
+
+  assert_equal "a", ret_get_f1_a
+  assert_equal "b", ret_get_f1_b
+
+  assert_equal "c", ret_get_f2
+end
+
 # got erro for travis ci. comment out until fix the problems
 #assert("Redis#zadd, Redis#zrange") do
 #  r = Redis.new "127.0.0.1", 6379
