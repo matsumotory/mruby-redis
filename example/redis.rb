@@ -67,6 +67,27 @@ if r["logs"].nil?
     puts "del success!"
 end
 
+puts "> redis hset myhash field1 a"
+r.hset "myhash", "field1", "a"
+
+puts "> redis hset myhash field2 b"
+r.hset "myhash", "field2", "b"
+
+puts "> redis hget myhash field1"
+puts r.hget "myhash", "field1"
+
+puts "> redis hget myhash field2"
+puts r.hget "myhash", "field2"
+
+puts "> redis hdel myhash field1"
+puts r.hdel "myhash", "field1"
+
+puts "> redis del myhash"
+
+if r["myhash"].nil?
+    puts "del success!"
+end
+
 puts "> redis zadd hs 80 a"
 r.zadd "hs", 80, "a"
 
