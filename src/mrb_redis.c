@@ -187,6 +187,20 @@ mrb_value mrb_redis_decr(mrb_state *mrb, mrb_value self)
     return  mrb_fixnum_value(counter);
 }
 
+mrb_value mrb_redis_incrby(mrb_state *mrb, mrb_value self)
+{
+    mrb_value key, val;
+    mrb_int counter;
+    redisContext *rc = DATA_PTR(self);
+
+    mrb_get_args(mrb, "oi", &key, &val);
+    redisReply *rr = redisCommand(rc, "INCRBY %s %d", RSTRING_PTR(key), val);
+    counter = rr->integer;
+    freeReplyObject(rr);
+
+    return mrb_fixnum_value(counter);
+}
+
 mrb_value mrb_redis_rpush(mrb_state *mrb, mrb_value self)
 {
     mrb_value key, val;
@@ -418,6 +432,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     mrb_define_method(mrb, redis, "del", mrb_redis_del, ARGS_ANY());
     mrb_define_method(mrb, redis, "incr", mrb_redis_incr, ARGS_OPT(1));
     mrb_define_method(mrb, redis, "decr", mrb_redis_decr, ARGS_OPT(1));
+    mrb_define_method(mrb, redis, "incrby", mrb_redis_incrby, ARGS_REQ(2));
     mrb_define_method(mrb, redis, "rpush", mrb_redis_rpush, ARGS_OPT(2));
     mrb_define_method(mrb, redis, "lpush", mrb_redis_lpush, ARGS_OPT(2));
     mrb_define_method(mrb, redis, "lrange", mrb_redis_lrange, ARGS_ANY());
