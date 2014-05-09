@@ -72,6 +72,9 @@ puts "#{key} decr: #{r.decr(key)}"
 puts "#{key} decr: #{r.decr(key)}"
 puts "#{key} decr: #{r.decr(key)}"
 
+puts "> redis decrby #{key} 100"
+puts r.incrby key, 100
+
 puts "> redis lpush logs error"
 r.lpush "logs", "error1"
 r.lpush "logs", "error2"
@@ -191,6 +194,8 @@ hoge decr: 3
 hoge decr: 2
 hoge decr: 1
 hoge decr: 0
+> redis decrby hoge 100
+100
 > redis lpush logs error
 > redis lrange 0 -1
 ["error3", "error2", "error1"]

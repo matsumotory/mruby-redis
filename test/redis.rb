@@ -72,6 +72,20 @@ assert("Redis#hdel") do
   assert_true ret_exists
 end
 
+assert("Redis#incrby") do
+  r = Redis.new "127.0.0.1", 6379
+  r.del "score"
+
+  r.set "score", "10"
+  ret = r.incrby "score", 100
+  score = r.get "score"
+
+  r.close
+
+  assert_equal 110, ret
+  assert_equal "110", score
+end
+
 # got erro for travis ci. comment out until fix the problems
 #assert("Redis#zadd, Redis#zrange") do
 #  r = Redis.new "127.0.0.1", 6379
