@@ -119,7 +119,7 @@ assert("Redis#decrby") do
 
   r.close
 
-  assert_equal -90, ret
+  assert_equal(-90, ret)
   assert_equal "-90", score
 end
 
