@@ -54,6 +54,18 @@ assert("Redis#exist?") do
   assert_false ret2
 end
 
+assert("Redis#del") do
+  r = Redis.new HOST, PORT
+  r.set "hoge", "a"
+  ret = r.exists? "hoge"
+  r.del "hoge"
+  ret2 = r.exists? "hoge"
+  r.close
+
+  assert_true ret
+  assert_false ret2
+end
+
 assert("Redis#hset", "Redis#hget") do
   r = Redis.new HOST, PORT
   r.del "myhash"
@@ -181,11 +193,7 @@ end
 #end
 
 # TODO: Add test
-# - select
 # - randomkey
-# - del
-# - incr
-# - decr
 # - lpush
 # - lrange
 # - ltrim
