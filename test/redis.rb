@@ -5,6 +5,26 @@
 HOST = "127.0.0.1"
 PORT = 6379
 
+assert("Redis#select") do
+  r = Redis.new HOST, PORT
+  r.select 0
+  r.set "score", "0"
+  db0_score =  r.get("score")
+
+  r.select 1
+  r.set "score", "1"
+  db1_score = r.get("score")
+
+  r.select 0
+  db0_1_score = r.get("score")
+
+  r.close
+
+  assert_equal "0", db0_score
+  assert_equal "1", db1_score
+  assert_equal "0", db0_1_score
+end
+
 assert("Redis#set, Redis#get") do
   r = Redis.new HOST, PORT
   r.set "hoge", "fuga"
