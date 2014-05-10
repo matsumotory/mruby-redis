@@ -2,8 +2,11 @@
 ## Redis Test
 ##
 
+HOST = "127.0.0.1"
+PORT = 6379
+
 assert("Redis#set, Redis#get") do
-  r = Redis.new "127.0.0.1", 6379
+  r = Redis.new HOST, PORT
   r.set "hoge", "fuga"
   ret = r.get "hoge"
   r.close
@@ -12,7 +15,7 @@ assert("Redis#set, Redis#get") do
 end
 
 assert("Redis#[]=, Redis#[]") do
-  r = Redis.new "127.0.0.1", 6379
+  r = Redis.new HOST, PORT
   r["hoge"] = "fuga"
   ret = r["hoge"]
   r.close
@@ -21,7 +24,7 @@ assert("Redis#[]=, Redis#[]") do
 end
 
 assert("Redis#exist?") do
-  r = Redis.new "127.0.0.1", 6379
+  r = Redis.new HOST, PORT
   r["hoge"] = "aaa"
   ret1 = r.exists? "hoge"
   ret2 = r.exists? "fuga"
@@ -32,7 +35,7 @@ assert("Redis#exist?") do
 end
 
 assert("Redis#hset", "Redis#hget") do
-  r = Redis.new "127.0.0.1", 6379
+  r = Redis.new HOST, PORT
   r.del "myhash"
 
   ret_set_f1_a = r.hset "myhash", "field1", "a"
@@ -55,7 +58,7 @@ assert("Redis#hset", "Redis#hget") do
 end
 
 assert("Redis#hdel") do
-  r = Redis.new "127.0.0.1", 6379
+  r = Redis.new HOST, PORT
   r.del "myhash"
 
   r.hset "myhash", "field1", "a"
@@ -73,7 +76,7 @@ assert("Redis#hdel") do
 end
 
 assert("Redis#incrby") do
-  r = Redis.new "127.0.0.1", 6379
+  r = Redis.new HOST, PORT
   r.del "score"
 
   r.set "score", "10"
@@ -102,7 +105,7 @@ end
 
 # got erro for travis ci. comment out until fix the problems
 #assert("Redis#zadd, Redis#zrange") do
-#  r = Redis.new "127.0.0.1", 6379
+#  r = Redis.new HOST, PORT
 #  r.del "hs"
 #  r.zadd "hs", 80, "a"
 #  r.zadd "hs", 50.1, "b"
@@ -114,7 +117,7 @@ end
 #end
 #
 #assert("Redis#zrevrange") do
-#  r = Redis.new "127.0.0.1", 6379
+#  r = Redis.new HOST, PORT
 #  r.del "hs"
 #  r.zadd "hs", 80, "a"
 #  r.zadd "hs", 50.1, "b"
@@ -126,7 +129,7 @@ end
 #end
 #
 #assert("Redis#zrank") do
-#  r = Redis.new "127.0.0.1", 6379
+#  r = Redis.new HOST, PORT
 #  r.del "hs"
 #  r.zadd "hs", 80, "a"
 #  r.zadd "hs", 50.1, "b"
@@ -142,7 +145,7 @@ end
 #end
 #
 #assert("Redis#zscore") do
-#  r = Redis.new "127.0.0.1", 6379
+#  r = Redis.new HOST, PORT
 #  r.del "hs"
 #  r.zadd "hs", 80, "a"
 #  r.zadd "hs", 50.1, "b"
