@@ -181,11 +181,8 @@ end
 #end
 
 # TODO: Add test
-# - select
 # - randomkey
 # - del
-# - incr
-# - decr
 # - lpush
 # - lrange
 # - ltrim
