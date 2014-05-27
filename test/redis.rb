@@ -122,7 +122,7 @@ assert("Redis#incrby") do
 end
 
 assert("Redis#decrby") do
-  r = Redis.new "127.0.0.1", 6379
+  r = Redis.new HOST, PORT
   r.del "score"
 
   r.set "score", "10"
