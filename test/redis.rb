@@ -135,6 +135,34 @@ assert("Redis#decrby") do
   assert_equal "-90", score
 end
 
+assert("Redis#lpush", "Redis#lrange") do
+  r = Redis.new HOST, PORT
+  r.del "logs"
+
+  range1 = r.lrange "logs", 0, -1
+  ret1 = r.lpush "logs", "error1"
+  ret2 = r.lpush "logs", "error2"
+  ret3 = r.lpush "logs", "error3"
+  range2 = r.lrange "logs", 0, 0
+  range3 = r.lrange "logs", -3, 2
+  range4 = r.lrange "logs", 0, -1
+  range5 = r.lrange "logs", -100, 100
+  range6 = r.lrange "logs", 5, 10
+
+  r.close
+
+  assert_equal 1, ret1
+  assert_equal 2, ret2
+  assert_equal 3, ret3
+
+  assert_equal [], range1
+  assert_equal ["error3"], range2
+  assert_equal ["error3", "error2", "error1"], range3
+  assert_equal ["error3", "error2", "error1"], range4
+  assert_equal ["error3", "error2", "error1"], range5
+  assert_equal [], range6
+end
+
 # got erro for travis ci. comment out until fix the problems
 #assert("Redis#zadd, Redis#zrange") do
 #  r = Redis.new HOST, PORT
@@ -194,7 +222,5 @@ end
 
 # TODO: Add test
 # - randomkey
-# - lpush
-# - lrange
 # - ltrim
 # - publish
