@@ -189,8 +189,8 @@ mrb_value mrb_redis_decr(mrb_state *mrb, mrb_value self)
 
 mrb_value mrb_redis_incrby(mrb_state *mrb, mrb_value self)
 {
-    mrb_value key, val;
-    mrb_int counter;
+    mrb_value key;
+    mrb_int val, counter;
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oi", &key, &val);
@@ -203,8 +203,8 @@ mrb_value mrb_redis_incrby(mrb_state *mrb, mrb_value self)
 
 mrb_value mrb_redis_decrby(mrb_state *mrb, mrb_value self)
 {
-    mrb_value key, val;
-    mrb_int counter;
+    mrb_value key;
+    mrb_int val, counter;
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oi", &key, &val);
