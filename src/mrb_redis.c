@@ -243,6 +243,24 @@ mrb_value mrb_redis_lpush(mrb_state *mrb, mrb_value self)
     return  mrb_fixnum_value(integer);
 }
 
+mrb_value mrb_redis_lpop(mrb_state *mrb, mrb_value self)
+{
+    char *val;
+    mrb_value key;
+    redisContext *rc = DATA_PTR(self);
+
+    mrb_get_args(mrb, "o", &key);
+    redisReply *rr = redisCommand(rc,"LPOP %s", mrb_str_to_cstr(mrb, key));
+    if (rr->type == REDIS_REPLY_STRING) {
+        val = strdup(rr->str);
+        freeReplyObject(rr);
+        return mrb_str_new(mrb, val, strlen(val));
+    } else {
+        freeReplyObject(rr);
+        return mrb_nil_value();
+    }
+}
+
 mrb_value mrb_redis_lrange(mrb_state *mrb, mrb_value self)
 {
     int i;
@@ -450,6 +468,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     mrb_define_method(mrb, redis, "decrby", mrb_redis_decrby, MRB_ARGS_REQ(2));
     mrb_define_method(mrb, redis, "rpush", mrb_redis_rpush, MRB_ARGS_OPT(2));
     mrb_define_method(mrb, redis, "lpush", mrb_redis_lpush, MRB_ARGS_OPT(2));
+    mrb_define_method(mrb, redis, "lpop", mrb_redis_lpop, MRB_ARGS_REQ(1));
     mrb_define_method(mrb, redis, "lrange", mrb_redis_lrange, MRB_ARGS_ANY());
     mrb_define_method(mrb, redis, "ltrim", mrb_redis_ltrim, MRB_ARGS_ANY());
     mrb_define_method(mrb, redis, "hset", mrb_redis_hset, MRB_ARGS_REQ(3));
