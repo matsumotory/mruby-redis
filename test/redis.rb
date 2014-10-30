@@ -163,6 +163,24 @@ assert("Redis#lpush", "Redis#lrange") do
   assert_equal [], range6
 end
 
+assert("Redis#rpop") do
+  r = Redis.new HOST, PORT
+  r.del "list"
+
+  r.rpush "list", "one"
+  r.rpush "list", "two"
+  r.rpush "list", "three"
+  range1 = r.lrange "list", 0, -1
+  ret = r.rpop "list"
+  range2 = r.lrange "list", 0, -1
+
+  r.close
+
+  assert_equal ["one", "two", "three"], range1
+  assert_equal "three", ret
+  assert_equal ["one", "two"], range2
+end
+
 assert("Redis#lpop") do
   r = Redis.new HOST, PORT
   r.del "list"
