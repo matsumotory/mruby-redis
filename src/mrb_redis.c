@@ -132,6 +132,20 @@ mrb_value mrb_redis_exists(mrb_state *mrb, mrb_value self)
     return counter ? mrb_true_value() : mrb_false_value();
 }
 
+mrb_value mrb_redis_expire(mrb_state *mrb, mrb_value self)
+{
+    mrb_value key, expire;
+    mrb_int counter;
+    redisContext *rc = DATA_PTR(self);
+
+    mrb_get_args(mrb, "oi", &key, &expire);
+    redisReply *rr = redisCommand(rc, "EXPIRE %s %d", mrb_str_to_cstr(mrb, key), expire);
+    counter = rr->integer;
+    freeReplyObject(rr);
+
+    return mrb_bool_value(counter == 1);
+}
+
 mrb_value mrb_redis_randomkey (mrb_state *mrb, mrb_value self)
 {
     char *val;
@@ -521,6 +535,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     mrb_define_method(mrb, redis, "set", mrb_redis_set, MRB_ARGS_ANY());
     mrb_define_method(mrb, redis, "get", mrb_redis_get, MRB_ARGS_ANY());
     mrb_define_method(mrb, redis, "exists?", mrb_redis_exists, MRB_ARGS_REQ(1));
+    mrb_define_method(mrb, redis, "expire", mrb_redis_expire, MRB_ARGS_REQ(2));
     mrb_define_method(mrb, redis, "randomkey", mrb_redis_randomkey, MRB_ARGS_NONE());
     mrb_define_method(mrb, redis, "[]=", mrb_redis_set, MRB_ARGS_ANY());
     mrb_define_method(mrb, redis, "[]", mrb_redis_get, MRB_ARGS_ANY());
