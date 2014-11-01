@@ -360,6 +360,27 @@ mrb_value mrb_redis_hdel(mrb_state *mrb, mrb_value self) {
     return mrb_fixnum_value(integer);
 }
 
+mrb_value mrb_redis_hkeys(mrb_state *mrb, mrb_value self)
+{
+    mrb_value key, array = mrb_nil_value();
+    redisContext *rc = DATA_PTR(self);
+
+    mrb_get_args(mrb, "o", &key);
+    redisReply *rr = redisCommand(rc, "HKEYS %s", mrb_str_to_cstr(mrb, key));
+    if (rr->type == REDIS_REPLY_ARRAY) {
+        if (rr->elements > 0) {
+            int i;
+
+            array = mrb_ary_new(mrb);
+            for (i = 0; i < rr->elements; i++) {
+                mrb_ary_push(mrb, array, mrb_str_new_cstr(mrb, rr->element[i]->str));
+            }
+        }
+    }
+    freeReplyObject(rr);
+    return array;
+}
+
 mrb_value mrb_redis_zadd(mrb_state *mrb, mrb_value self)
 {
     mrb_value key, member;
@@ -493,6 +514,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     mrb_define_method(mrb, redis, "hset", mrb_redis_hset, MRB_ARGS_REQ(3));
     mrb_define_method(mrb, redis, "hget", mrb_redis_hget, MRB_ARGS_REQ(2));
     mrb_define_method(mrb, redis, "hdel", mrb_redis_hdel, MRB_ARGS_REQ(2));
+    mrb_define_method(mrb, redis, "hkeys", mrb_redis_hkeys, MRB_ARGS_REQ(1));
     mrb_define_method(mrb, redis, "zadd", mrb_redis_zadd, MRB_ARGS_REQ(3));
     mrb_define_method(mrb, redis, "zrange", mrb_redis_zrange, MRB_ARGS_REQ(3));
     mrb_define_method(mrb, redis, "zrevrange", mrb_redis_zrevrange, MRB_ARGS_REQ(3));

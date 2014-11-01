@@ -107,6 +107,23 @@ assert("Redis#hdel") do
   assert_true ret_exists
 end
 
+assert("Redis#hkeys") do
+  r = Redis.new HOST, PORT
+  r.del "myhash"
+
+  keys =  r.hkeys "myhash"
+
+  r.hset "myhash", "field1", "a"
+  r.hset "myhash", "field2", "b"
+
+  keys2 =  r.hkeys "myhash"
+
+  r.close
+
+  assert_nil keys
+  assert_equal ["field1", "field2"], keys2
+end
+
 assert("Redis#incrby") do
   r = Redis.new HOST, PORT
   r.del "score"
