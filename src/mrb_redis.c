@@ -34,6 +34,7 @@
 #include "mruby/data.h"
 #include "mruby/variable.h"
 #include "mruby/array.h"
+#include "mruby/hash.h"
 #include "mruby/string.h"
 #include "mruby/class.h"
 #include "mrb_redis.h"
@@ -347,6 +348,29 @@ mrb_value mrb_redis_hget(mrb_state *mrb, mrb_value self) {
     }
 }
 
+mrb_value mrb_redis_hgetall(mrb_state *mrb, mrb_value self)
+{
+    mrb_value obj, hash = mrb_nil_value();
+    redisContext *rc = DATA_PTR(self);
+
+    mrb_get_args(mrb, "o", &obj);
+    redisReply *rr = redisCommand(rc, "HGETALL %s", mrb_str_to_cstr(mrb, obj));
+    if (rr->type == REDIS_REPLY_ARRAY) {
+        if (rr->elements > 0) {
+            int i;
+            
+            hash = mrb_hash_new(mrb);
+            for (i = 0; i < rr->elements; i += 2) {
+                mrb_hash_set(mrb, hash,
+                             mrb_str_new_cstr(mrb, rr->element[i]->str), 
+                             mrb_str_new_cstr(mrb, rr->element[i + 1]->str));
+            }
+        }
+    }
+    freeReplyObject(rr);
+    return hash;
+}
+
 mrb_value mrb_redis_hdel(mrb_state *mrb, mrb_value self) {
     mrb_value key, val;
     mrb_int integer;
@@ -513,6 +537,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     mrb_define_method(mrb, redis, "ltrim", mrb_redis_ltrim, MRB_ARGS_ANY());
     mrb_define_method(mrb, redis, "hset", mrb_redis_hset, MRB_ARGS_REQ(3));
     mrb_define_method(mrb, redis, "hget", mrb_redis_hget, MRB_ARGS_REQ(2));
+    mrb_define_method(mrb, redis, "hgetall", mrb_redis_hgetall, MRB_ARGS_REQ(1));
     mrb_define_method(mrb, redis, "hdel", mrb_redis_hdel, MRB_ARGS_REQ(2));
     mrb_define_method(mrb, redis, "hkeys", mrb_redis_hkeys, MRB_ARGS_REQ(1));
     mrb_define_method(mrb, redis, "zadd", mrb_redis_zadd, MRB_ARGS_REQ(3));
