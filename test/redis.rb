@@ -54,6 +54,29 @@ assert("Redis#exist?") do
   assert_false ret2
 end
 
+assert("Redis#expire") do
+  r = Redis.new HOST, PORT
+  r.del "hoge"
+
+  expire = r.expire "hoge", 1
+  r.set "hoge", "a"
+  expire2 = r.expire "hoge", 1
+  ret = r.get "hoge"
+
+  # 1000_000 micro sec is sensitive time 
+  # so 1100_000 micro sec is sufficient time.
+  usleep 1100_000
+  
+  ret2 = r.get "hoge"
+
+  r.close
+
+  assert_false expire
+  assert_true expire2
+  assert_equal "a", ret
+  assert_nil ret2
+end
+
 assert("Redis#del") do
   r = Redis.new HOST, PORT
   r.set "hoge", "a"
