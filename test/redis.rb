@@ -256,6 +256,30 @@ assert("Redis#lpop") do
   assert_equal ["two", "three"], range2
 end
 
+assert("Redis#ttl") do
+  r = Redis.new HOST, PORT
+  r.del "hoge"
+  r.del "fuga"
+
+  r.set "hoge", "a"  
+  r.expire "hoge", 1
+  ttl = r.ttl "hoge"
+
+  # 1_000_000 micro sec is sensitive time 
+  # so 1_100_000 micro sec is sufficient time.
+  usleep 1_100_000
+
+  ttl2 = r.ttl "hoge"
+  r.set "fuga", "b"
+  ttl3 = r.ttl "fuga"
+
+  r.close
+
+  assert_equal 1, ttl
+  assert_equal -2, ttl2
+  assert_equal -1, ttl3
+end
+
 # got erro for travis ci. comment out until fix the problems
 #assert("Redis#zadd, Redis#zrange") do
 #  r = Redis.new HOST, PORT
