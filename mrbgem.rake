@@ -2,11 +2,11 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
   spec.license = 'MIT'
   spec.authors = 'MATSUMOTO Ryosuke'
   spec.version = '0.0.1'
-  spec.linker.libraries << "hiredis"
   # for expire test
   require 'open3'
 
   hiredis_dir = "#{build_dir}/hiredis"
+  spec.linker.libraries << "#{hiredis_dir}/libhiredis.a"
 
   def run_command env, command
     STDOUT.sync = true
