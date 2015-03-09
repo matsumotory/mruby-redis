@@ -6,7 +6,7 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
   require 'open3'
 
   hiredis_dir = "#{build_dir}/hiredis"
-  spec.linker.libraries << "#{hiredis_dir}/libhiredis.a"
+  spec.linker.libraries << "hiredis"
 
   def run_command env, command
     STDOUT.sync = true
