@@ -32,10 +32,12 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
         'CC' => "#{spec.build.cc.command} #{spec.build.cc.flags.join(' ')}",
         'CXX' => "#{spec.build.cxx.command} #{spec.build.cxx.flags.join(' ')}",
         'LD' => "#{spec.build.linker.command} #{spec.build.linker.flags.join(' ')}",
-        'AR' => spec.build.archiver.command
+        'AR' => spec.build.archiver.command,
+        'PREFIX' => `pwd`
       }
 
       run_command e, "make"
+      run_command e, "make install"
     end
   end
 
