@@ -306,7 +306,7 @@ mrb_value mrb_redis_lrange(mrb_state *mrb, mrb_value self)
     if (rr->type == REDIS_REPLY_ARRAY) {
         array = mrb_ary_new(mrb);
         for (i = 0; i < rr->elements; i++) {
-            mrb_ary_push(mrb, array, mrb_str_new_cstr(mrb, rr->element[i]->str));
+            mrb_ary_push(mrb, array, mrb_str_new(mrb, rr->element[i]->str, rr->element[i]->len));
         }
     } else {
         freeReplyObject(rr);
@@ -376,8 +376,8 @@ mrb_value mrb_redis_hgetall(mrb_state *mrb, mrb_value self)
             hash = mrb_hash_new(mrb);
             for (i = 0; i < rr->elements; i += 2) {
                 mrb_hash_set(mrb, hash,
-                             mrb_str_new_cstr(mrb, rr->element[i]->str), 
-                             mrb_str_new_cstr(mrb, rr->element[i + 1]->str));
+                             mrb_str_new(mrb, rr->element[i]->str, rr->element[i]->len), 
+                             mrb_str_new(mrb, rr->element[i + 1]->str, rr->element[i + 1]->len));
             }
         }
     }
@@ -411,7 +411,7 @@ mrb_value mrb_redis_hkeys(mrb_state *mrb, mrb_value self)
 
             array = mrb_ary_new(mrb);
             for (i = 0; i < rr->elements; i++) {
-                mrb_ary_push(mrb, array, mrb_str_new_cstr(mrb, rr->element[i]->str));
+                mrb_ary_push(mrb, array, mrb_str_new(mrb, rr->element[i]->str, rr->element[i]->len));
             }
         }
     }
@@ -458,7 +458,7 @@ mrb_value mrb_redis_basic_zrange(mrb_state *mrb, mrb_value self, const char *cmd
     if (rr->type == REDIS_REPLY_ARRAY) {
         array = mrb_ary_new(mrb);
         for (i = 0; i < rr->elements; i++) {
-            mrb_ary_push(mrb, array, mrb_str_new_cstr(mrb, rr->element[i]->str));
+            mrb_ary_push(mrb, array, mrb_str_new(mrb, rr->element[i]->str, rr->element[i]->len));
         }
     } else {
         freeReplyObject(rr);
@@ -511,7 +511,7 @@ mrb_value mrb_redis_zscore(mrb_state *mrb, mrb_value self)
 
     mrb_get_args(mrb, "oo", &key, &member);
     redisReply *rr = redisCommand(rc, "ZSCORE %s %s", mrb_str_to_cstr(mrb, key), mrb_str_to_cstr(mrb, member));
-    score = mrb_str_new_cstr(mrb, rr->str);
+    score = mrb_str_new(mrb, rr->str, rr->len);
     freeReplyObject(rr);
 
     return score;
