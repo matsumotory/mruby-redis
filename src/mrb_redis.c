@@ -33,6 +33,7 @@
 #include "mruby.h"
 #include "mruby/data.h"
 #include "mruby/variable.h"
+#include "mruby/numeric.h"
 #include "mruby/array.h"
 #include "mruby/hash.h"
 #include "mruby/string.h"
@@ -94,7 +95,10 @@ mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oo", &key, &val);
-    redisReply *rs = redisCommand(rc,"SET %s %s", mrb_str_to_cstr(mrb, key), mrb_str_to_cstr(mrb, val));
+
+    const char *argv[] = {"SET", RSTRING_PTR(key), RSTRING_PTR(val)};
+    size_t lens[] = {3, RSTRING_LEN(key), RSTRING_LEN(val)};
+    redisReply *rs = redisCommandArgv(rc, 3, argv, lens);
     freeReplyObject(rs);
 
     return  self;
@@ -104,14 +108,19 @@ mrb_value mrb_redis_get(mrb_state *mrb, mrb_value self)
 {
     mrb_value key;
     char *val;
+    int len;
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "o", &key);
-    redisReply *rs = redisCommand(rc, "GET %s", mrb_str_to_cstr(mrb, key));
+    const char *argv[] = {"GET", RSTRING_PTR(key)};
+    size_t lens[] = {3, RSTRING_LEN(key)};
+    redisReply *rs = redisCommandArgv(rc, 2, argv, lens);
     if (rs->type == REDIS_REPLY_STRING) {
-        val = strdup(rs->str);
+        val = malloc((rs->len + 1) * sizeof(char));
+        memcpy(val, rs->str, (rs->len + 1) * sizeof(char));
+        len = rs->len;
         freeReplyObject(rs);
-        return mrb_str_new(mrb, val, strlen(val));
+        return mrb_str_new(mrb, val, len);
     } else {
         freeReplyObject(rs);
         return mrb_nil_value();
@@ -125,7 +134,9 @@ mrb_value mrb_redis_exists(mrb_state *mrb, mrb_value self)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "o", &key);
-    redisReply *rr = redisCommand(rc, "EXISTS %s", mrb_str_to_cstr(mrb, key));
+    const char *argv[] = {"EXISTS", RSTRING_PTR(key)};
+    size_t lens[] = {6, RSTRING_LEN(key)};
+    redisReply *rr = redisCommandArgv(rc, 2, argv, lens);
     counter = rr->integer;
     freeReplyObject(rr);
 
@@ -134,12 +145,15 @@ mrb_value mrb_redis_exists(mrb_state *mrb, mrb_value self)
 
 mrb_value mrb_redis_expire(mrb_state *mrb, mrb_value self)
 {
-    mrb_value key, expire;
-    mrb_int counter;
+    mrb_value key;
+    mrb_int expire, counter;
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oi", &key, &expire);
-    redisReply *rr = redisCommand(rc, "EXPIRE %s %d", mrb_str_to_cstr(mrb, key), expire);
+    mrb_value val = mrb_fixnum_to_str(mrb, mrb_fixnum_value(expire), 10);
+    const char *argv[] = {"EXPIRE", RSTRING_PTR(key), RSTRING_PTR(val)};
+    size_t lens[] = {6, RSTRING_LEN(key), RSTRING_LEN(val)};
+    redisReply *rr = redisCommandArgv(rc, 3, argv, lens);
     counter = rr->integer;
     freeReplyObject(rr);
 
@@ -149,13 +163,16 @@ mrb_value mrb_redis_expire(mrb_state *mrb, mrb_value self)
 mrb_value mrb_redis_randomkey (mrb_state *mrb, mrb_value self)
 {
     char *val;
+    int len;
     redisContext *rc = DATA_PTR(self);
 
     redisReply *rs = redisCommand(rc, "RANDOMKEY");
     if (rs->type == REDIS_REPLY_STRING) {
-        val = strdup(rs->str);
+        val = malloc((rs->len + 1) * sizeof(char));
+        memcpy(val, rs->str, (rs->len + 1) * sizeof(char));
+        len = rs->len;
         freeReplyObject(rs);
-        return mrb_str_new(mrb, val, strlen(val));
+        return mrb_str_new(mrb, val, len);
     } else {
         freeReplyObject(rs);
         return mrb_nil_value();
@@ -168,7 +185,9 @@ mrb_value mrb_redis_del(mrb_state *mrb, mrb_value self)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "o", &key);
-    redisReply *rs = redisCommand(rc, "DEL %s", mrb_str_to_cstr(mrb, key));
+    const char *argv[] = {"DEL", RSTRING_PTR(key)};
+    size_t lens[] = {3, RSTRING_LEN(key)};
+    redisReply *rs = redisCommandArgv(rc, 2, argv, lens);
     freeReplyObject(rs);
 
     return  self;
@@ -181,7 +200,9 @@ mrb_value mrb_redis_incr(mrb_state *mrb, mrb_value self)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "o", &key);
-    redisReply *rr = redisCommand(rc, "INCR %s", mrb_str_to_cstr(mrb, key));
+    const char *argv[] = {"INCR", RSTRING_PTR(key)};
+    size_t lens[] = {4, RSTRING_LEN(key)};
+    redisReply *rr = redisCommandArgv(rc, 2, argv, lens);
     counter = rr->integer;
     freeReplyObject(rr);
 
@@ -195,7 +216,9 @@ mrb_value mrb_redis_decr(mrb_state *mrb, mrb_value self)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "o", &key);
-    redisReply *rr = redisCommand(rc, "DECR %s", mrb_str_to_cstr(mrb, key));
+    const char *argv[] = {"DECR", RSTRING_PTR(key)};
+    size_t lens[] = {4, RSTRING_LEN(key)};
+    redisReply *rr = redisCommandArgv(rc, 2, argv, lens);
     counter = rr->integer;
     freeReplyObject(rr);
 
@@ -209,7 +232,10 @@ mrb_value mrb_redis_incrby(mrb_state *mrb, mrb_value self)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oi", &key, &val);
-    redisReply *rr = redisCommand(rc, "INCRBY %s %d", RSTRING_PTR(key), val);
+    mrb_value val_str = mrb_fixnum_to_str(mrb, mrb_fixnum_value(val), 10);
+    const char *argv[] = {"INCRBY", RSTRING_PTR(key), RSTRING_PTR(val_str)};
+    size_t lens[] = {6, RSTRING_LEN(key), RSTRING_LEN(val_str)};
+    redisReply *rr = redisCommandArgv(rc, 3, argv, lens);
     counter = rr->integer;
     freeReplyObject(rr);
 
@@ -223,7 +249,10 @@ mrb_value mrb_redis_decrby(mrb_state *mrb, mrb_value self)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oi", &key, &val);
-    redisReply *rr = redisCommand(rc, "DECRBY %s %d", RSTRING_PTR(key), val);
+    mrb_value val_str = mrb_fixnum_to_str(mrb, mrb_fixnum_value(val), 10);
+    const char *argv[] = {"DECRBY", RSTRING_PTR(key), RSTRING_PTR(val_str)};
+    size_t lens[] = {6, RSTRING_LEN(key), RSTRING_LEN(val_str)};
+    redisReply *rr = redisCommandArgv(rc, 3, argv, lens);
     counter = rr->integer;
     freeReplyObject(rr);
 
@@ -237,7 +266,9 @@ mrb_value mrb_redis_rpush(mrb_state *mrb, mrb_value self)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oo", &key, &val);
-    redisReply *rr = redisCommand(rc,"RPUSH %s %s", mrb_str_to_cstr(mrb, key), mrb_str_to_cstr(mrb, val));
+    const char *argv[] = {"RPUSH", RSTRING_PTR(key), RSTRING_PTR(val)};
+    size_t lens[] = {5, RSTRING_LEN(key), RSTRING_LEN(val)};
+    redisReply *rr = redisCommandArgv(rc, 3, argv, lens);
     integer = rr->integer;
     freeReplyObject(rr);
 
@@ -251,7 +282,9 @@ mrb_value mrb_redis_lpush(mrb_state *mrb, mrb_value self)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oo", &key, &val);
-    redisReply *rr = redisCommand(rc,"LPUSH %s %s", mrb_str_to_cstr(mrb, key), mrb_str_to_cstr(mrb, val));
+    const char *argv[] = {"LPUSH", RSTRING_PTR(key), RSTRING_PTR(val)};
+    size_t lens[] = {5, RSTRING_LEN(key), RSTRING_LEN(val)};
+    redisReply *rr = redisCommandArgv(rc, 3, argv, lens);
     integer = rr->integer;
     freeReplyObject(rr);
 
@@ -261,15 +294,20 @@ mrb_value mrb_redis_lpush(mrb_state *mrb, mrb_value self)
 mrb_value mrb_redis_rpop(mrb_state *mrb, mrb_value self)
 {
     char *val;
+    int len;
     mrb_value key;
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "o", &key);
-    redisReply *rr = redisCommand(rc,"RPOP %s", mrb_str_to_cstr(mrb, key));
+    const char *argv[] = {"RPOP", RSTRING_PTR(key)};
+    size_t lens[] = {4, RSTRING_LEN(key)};
+    redisReply *rr = redisCommandArgv(rc, 2, argv, lens);
     if (rr->type == REDIS_REPLY_STRING) {
-        val = strdup(rr->str);
+        val = malloc((rr->len + 1) * sizeof(char));
+        memcpy(val, rr->str, (rr->len + 1) * sizeof(char));
+        len = rr->len;
         freeReplyObject(rr);
-        return mrb_str_new(mrb, val, strlen(val));
+        return mrb_str_new(mrb, val, len);
     } else {
         freeReplyObject(rr);
         return mrb_nil_value();
@@ -279,15 +317,20 @@ mrb_value mrb_redis_rpop(mrb_state *mrb, mrb_value self)
 mrb_value mrb_redis_lpop(mrb_state *mrb, mrb_value self)
 {
     char *val;
+    int len;
     mrb_value key;
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "o", &key);
-    redisReply *rr = redisCommand(rc,"LPOP %s", mrb_str_to_cstr(mrb, key));
+    const char *argv[] = {"LPOP", RSTRING_PTR(key)};
+    size_t lens[] = {4, RSTRING_LEN(key)};
+    redisReply *rr = redisCommandArgv(rc, 2, argv, lens);
     if (rr->type == REDIS_REPLY_STRING) {
-        val = strdup(rr->str);
+        val = malloc((rr->len + 1) * sizeof(char));
+        memcpy(val, rr->str, (rr->len + 1) * sizeof(char));
+        len = rr->len;
         freeReplyObject(rr);
-        return mrb_str_new(mrb, val, strlen(val));
+        return mrb_str_new(mrb, val, len);
     } else {
         freeReplyObject(rr);
         return mrb_nil_value();
@@ -302,7 +345,11 @@ mrb_value mrb_redis_lrange(mrb_state *mrb, mrb_value self)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oii", &list, &arg1, &arg2);
-    redisReply *rr = redisCommand(rc,"LRANGE %s %d %d", mrb_str_to_cstr(mrb, list), arg1, arg2);
+    mrb_value val_str1 = mrb_fixnum_to_str(mrb, mrb_fixnum_value(arg1), 10);
+    mrb_value val_str2 = mrb_fixnum_to_str(mrb, mrb_fixnum_value(arg2), 10);
+    const char *argv[] = {"LRANGE", RSTRING_PTR(list), RSTRING_PTR(val_str1), RSTRING_PTR(val_str2)};
+    size_t lens[] = {6, RSTRING_LEN(list), RSTRING_LEN(val_str1), RSTRING_LEN(val_str2)};
+    redisReply *rr = redisCommandArgv(rc, 4, argv, lens);
     if (rr->type == REDIS_REPLY_ARRAY) {
         array = mrb_ary_new(mrb);
         for (i = 0; i < rr->elements; i++) {
@@ -325,7 +372,11 @@ mrb_value mrb_redis_ltrim(mrb_state *mrb, mrb_value self)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oii", &list, &arg1, &arg2);
-    redisReply *rr = redisCommand(rc,"LTRIM %s %d %d", mrb_str_to_cstr(mrb, list), arg1, arg2);
+    mrb_value val_str1 = mrb_fixnum_to_str(mrb, mrb_fixnum_value(arg1), 10);
+    mrb_value val_str2 = mrb_fixnum_to_str(mrb, mrb_fixnum_value(arg2), 10);
+    const char *argv[] = {"LTRIM", RSTRING_PTR(list), RSTRING_PTR(val_str1), RSTRING_PTR(val_str2)};
+    size_t lens[] = {6, RSTRING_LEN(list), RSTRING_LEN(val_str1), RSTRING_LEN(val_str2)};
+    redisReply *rr = redisCommandArgv(rc, 4, argv, lens);
     integer = rr->integer;
     freeReplyObject(rr);
 
@@ -338,7 +389,9 @@ mrb_value mrb_redis_hset(mrb_state *mrb, mrb_value self) {
     mrb_int integer;
 
     mrb_get_args(mrb, "ooo", &key, &field, &val);
-    redisReply *rs = redisCommand(rc, "HSET %s %s %s", mrb_str_to_cstr(mrb, key), mrb_str_to_cstr(mrb, field), mrb_str_to_cstr(mrb, val));
+    const char *argv[] = {"HSET", RSTRING_PTR(key), RSTRING_PTR(field), RSTRING_PTR(val)};
+    size_t lens[] = {4, RSTRING_LEN(key), RSTRING_LEN(field), RSTRING_LEN(val)};
+    redisReply *rs = redisCommandArgv(rc, 4, argv, lens);
     integer = rs->integer;
     freeReplyObject(rs);
 
@@ -348,14 +401,19 @@ mrb_value mrb_redis_hset(mrb_state *mrb, mrb_value self) {
 mrb_value mrb_redis_hget(mrb_state *mrb, mrb_value self) {
     mrb_value key, field;
     char *val;
+    int len;
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oo", &key, &field);
-    redisReply *rs = redisCommand(rc, "HGET %s %s", mrb_str_to_cstr(mrb, key), mrb_str_to_cstr(mrb, field));
+    const char *argv[] = {"HGET", RSTRING_PTR(key), RSTRING_PTR(field)};
+    size_t lens[] = {4, RSTRING_LEN(key), RSTRING_LEN(field)};
+    redisReply *rs = redisCommandArgv(rc, 3, argv, lens);
     if (rs->type == REDIS_REPLY_STRING) {
-        val = strdup(rs->str);
+        val = malloc((rs->len + 1) * sizeof(char));
+        memcpy(val, rs->str, (rs->len + 1) * sizeof(char));
+        len = rs->len;
         freeReplyObject(rs);
-        return mrb_str_new(mrb, val, strlen(val));
+        return mrb_str_new(mrb, val, len);
     } else {
         freeReplyObject(rs);
         return mrb_nil_value();
@@ -368,7 +426,9 @@ mrb_value mrb_redis_hgetall(mrb_state *mrb, mrb_value self)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "o", &obj);
-    redisReply *rr = redisCommand(rc, "HGETALL %s", mrb_str_to_cstr(mrb, obj));
+    const char *argv[] = {"HGETALL", RSTRING_PTR(obj)};
+    size_t lens[] = {7, RSTRING_LEN(obj)};
+    redisReply *rr = redisCommandArgv(rc, 2, argv, lens);
     if (rr->type == REDIS_REPLY_ARRAY) {
         if (rr->elements > 0) {
             int i;
@@ -391,7 +451,9 @@ mrb_value mrb_redis_hdel(mrb_state *mrb, mrb_value self) {
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oo", &key, &val);
-    redisReply *rr = redisCommand(rc,"HDEL %s %s", mrb_str_to_cstr(mrb, key), mrb_str_to_cstr(mrb, val));
+    const char *argv[] = {"HDEL", RSTRING_PTR(key), RSTRING_PTR(val)};
+    size_t lens[] = {4, RSTRING_LEN(key), RSTRING_LEN(val)};
+    redisReply *rr = redisCommandArgv(rc, 3, argv, lens);
     integer = rr->integer;
     freeReplyObject(rr);
 
@@ -404,7 +466,9 @@ mrb_value mrb_redis_hkeys(mrb_state *mrb, mrb_value self)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "o", &key);
-    redisReply *rr = redisCommand(rc, "HKEYS %s", mrb_str_to_cstr(mrb, key));
+    const char *argv[] = {"HKEYS", RSTRING_PTR(key)};
+    size_t lens[] = {5, RSTRING_LEN(key)};
+    redisReply *rr = redisCommandArgv(rc, 2, argv, lens);
     if (rr->type == REDIS_REPLY_ARRAY) {
         if (rr->elements > 0) {
             int i;
@@ -426,7 +490,9 @@ mrb_value mrb_redis_ttl(mrb_state *mrb, mrb_value self)
     mrb_int integer;
 
     mrb_get_args(mrb, "o", &key);
-    redisReply *rr = redisCommand(rc, "TTL %s", mrb_str_to_cstr(mrb, key));
+    const char *argv[] = {"TTL", RSTRING_PTR(key)};
+    size_t lens[] = {3, RSTRING_LEN(key)};
+    redisReply *rr = redisCommandArgv(rc, 2, argv, lens);
     integer = rr->integer;
     freeReplyObject(rr);
 
@@ -440,7 +506,10 @@ mrb_value mrb_redis_zadd(mrb_state *mrb, mrb_value self)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "ofo", &key, &score, &member);
-    redisReply *rs = redisCommand(rc, "ZADD %s %f %s", mrb_str_to_cstr(mrb, key), score, mrb_str_to_cstr(mrb, member));
+    mrb_value score_str = mrb_float_to_str(mrb, mrb_float_value(mrb, score), "%f");
+    const char *argv[] = {"ZADD", RSTRING_PTR(key), RSTRING_PTR(score_str), RSTRING_PTR(member)};
+    size_t lens[] = {4, RSTRING_LEN(key), RSTRING_LEN(score_str), RSTRING_LEN(member)};
+    redisReply *rs = redisCommandArgv(rc, 4, argv, lens);
     freeReplyObject(rs);
 
     return  self;
@@ -454,7 +523,11 @@ mrb_value mrb_redis_basic_zrange(mrb_state *mrb, mrb_value self, const char *cmd
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oii", &list, &arg1, &arg2);
-    redisReply *rr = redisCommand(rc, "%s %s %d %d", cmd, mrb_str_to_cstr(mrb, list), arg1, arg2);
+    mrb_value arg1_str = mrb_fixnum_to_str(mrb, mrb_fixnum_value(arg1), 10);
+    mrb_value arg2_str = mrb_fixnum_to_str(mrb, mrb_fixnum_value(arg2), 10);
+    const char *argv[] = {"ZADD", RSTRING_PTR(list), RSTRING_PTR(arg1_str), RSTRING_PTR(arg2_str)};
+    size_t lens[] = {4, RSTRING_LEN(list), RSTRING_LEN(arg1_str), RSTRING_LEN(arg2_str)};
+    redisReply *rr = redisCommandArgv(rc, 4, argv, lens);
     if (rr->type == REDIS_REPLY_ARRAY) {
         array = mrb_ary_new(mrb);
         for (i = 0; i < rr->elements; i++) {
@@ -487,7 +560,9 @@ mrb_value mrb_redis_basic_zrank(mrb_state *mrb, mrb_value self, const char* cmd)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oo", &key, &member);
-    redisReply *rr = redisCommand(rc, "%s %s %s", cmd, mrb_str_to_cstr(mrb, key), mrb_str_to_cstr(mrb, member));
+    const char *argv[] = {cmd, RSTRING_PTR(key), RSTRING_PTR(member)};
+    size_t lens[] = {strlen(cmd), RSTRING_LEN(key), RSTRING_LEN(member)};
+    redisReply *rr = redisCommandArgv(rc, 3, argv, lens);
     rank = rr->integer;
     freeReplyObject(rr);
 
@@ -510,7 +585,9 @@ mrb_value mrb_redis_zscore(mrb_state *mrb, mrb_value self)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oo", &key, &member);
-    redisReply *rr = redisCommand(rc, "ZSCORE %s %s", mrb_str_to_cstr(mrb, key), mrb_str_to_cstr(mrb, member));
+    const char *argv[] = {"ZSCORE", RSTRING_PTR(key), RSTRING_PTR(member)};
+    size_t lens[] = {6, RSTRING_LEN(key), RSTRING_LEN(member)};
+    redisReply *rr = redisCommandArgv(rc, 3, argv, lens);
     score = mrb_str_new(mrb, rr->str, rr->len);
     freeReplyObject(rr);
 
@@ -523,7 +600,9 @@ mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "oo", &channel, &msg);
-    redisReply *rr = redisCommand(rc,"PUBLISH %s %s", mrb_str_to_cstr(mrb, channel), mrb_str_to_cstr(mrb, msg));
+    const char *argv[] = {"PUBLISH", RSTRING_PTR(channel), RSTRING_PTR(msg)};
+    size_t lens[] = {7, RSTRING_LEN(channel), RSTRING_LEN(msg)};
+    redisReply *rr = redisCommandArgv(rc, 3, argv, lens);
     freeReplyObject(rr);
 
     return  self;
