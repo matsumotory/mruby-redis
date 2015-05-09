@@ -33,7 +33,7 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
         'CXX' => "#{spec.build.cxx.command} #{spec.build.cxx.flags.join(' ')}",
         'LD' => "#{spec.build.linker.command} #{spec.build.linker.flags.join(' ')}",
         'AR' => spec.build.archiver.command,
-        'PREFIX' => `pwd`
+        'PREFIX' => hiredis_dir
       }
 
       run_command e, "make"
