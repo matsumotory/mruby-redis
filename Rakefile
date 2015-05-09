@@ -2,10 +2,11 @@ MRUBY_CONFIG=File.expand_path(ENV["MRUBY_CONFIG"] || "build_config.rb")
 MRUBY_VERSION=ENV["MRUBY_VERSION"] || "1.1.0"
 
 file :mruby do
-  sh "wget -O mruby.tar.gz https://github.com/mruby/mruby/archive/#{MRUBY_VERSION}.tar.gz"
-  sh "tar -xvzf mruby.tar.gz"
-  sh "rm mruby.tar.gz"
-  sh "mv mruby-#{MRUBY_VERSION} mruby"
+  #sh "wget -O mruby.tar.gz https://github.com/mruby/mruby/archive/#{MRUBY_VERSION}.tar.gz"
+  #sh "tar -xvzf mruby.tar.gz"
+  #sh "rm mruby.tar.gz"
+  #sh "mv mruby-#{MRUBY_VERSION} mruby"
+  sh "git clone git://github.com/mruby/mruby.git"
 end
 
 desc "compile binary"
