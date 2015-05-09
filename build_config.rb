@@ -16,7 +16,6 @@ MRuby::Build.new do |conf|
   conf.gem File.expand_path(File.dirname(__FILE__))
   conf.gem :github => 'matsumoto-r/mruby-sleep'
 
-
   # C compiler settings
   # conf.cc do |cc|
   #   cc.command = ENV['CC'] || 'gcc'
@@ -73,6 +72,17 @@ MRuby::Build.new do |conf|
 
   # file separetor
   # conf.file_separator = '/'
+end
+
+MRuby::CrossBuild.new('test') do |conf|
+  toolchain :gcc
+
+  conf.test_runner do |t|
+    hiredis_dir = "#{build_dir}/../host/mrbgems/mruby-redis/hiredis/lib/"
+    t.build.linker.libraries << 'hiredis'
+    t.build.linker.library_paths << hiredis_dir
+    ENV["DYLD_LIBRARY_PATH"]="#{ENV["DYLD_LIBRARY_PATH"]}:#{hiredis_dir}"
+  end
 end
 
 # Define cross build settings
