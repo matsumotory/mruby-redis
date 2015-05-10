@@ -41,8 +41,9 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
     end
   end
 
-  spec.cc.include_paths << hiredis_dir
-  spec.linker.library_paths << hiredis_dir
+  spec.cc.include_paths << "#{hiredis_dir}/include"
+  #spec.linker.library_paths << "#{hiredis_dir}/lib"
+  spec.linker.flags_before_libraries << "#{hiredis_dir}/lib/libhiredis.a"
 
   spec.add_dependency "mruby-sleep"
 end
