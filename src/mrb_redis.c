@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "hiredis.h"
+#include <hiredis/hiredis.h>
 #include "mruby.h"
 #include "mruby/data.h"
 #include "mruby/variable.h"
