@@ -6,7 +6,6 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
   require 'open3'
 
   hiredis_dir = "#{build_dir}/hiredis"
-  spec.linker.libraries << "hiredis"
 
   def run_command env, command
     STDOUT.sync = true
@@ -42,7 +41,6 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
   end
 
   spec.cc.include_paths << "#{hiredis_dir}/include"
-  spec.linker.library_paths << "#{hiredis_dir}/lib"
   spec.linker.flags_before_libraries << "#{hiredis_dir}/lib/libhiredis.a"
 
   spec.add_dependency "mruby-sleep"
