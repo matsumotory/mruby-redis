@@ -74,19 +74,6 @@ MRuby::Build.new do |conf|
   # conf.file_separator = '/'
 end
 
-#MRuby::CrossBuild.new('test') do |conf|
-#  toolchain :gcc
-#
-#  conf.test_runner do |t|
-#    hiredis_dir = "#{build_dir}/../host/mrbgems/mruby-redis/hiredis"
-#    t.build.linker.libraries << 'hiredis'
-#    t.build.cc.include_paths << "#{hiredis_dir}/include"
-#    t.build.linker.flags_before_libraries << "#{hiredis_dir}/lib/libhiredis.a"
-#    #t.build.linker.library_paths << hiredis_dir
-#    #ENV["DYLD_LIBRARY_PATH"]="#{ENV["DYLD_LIBRARY_PATH"]}:#{hiredis_dir}"
-#  end
-#end
-
 # Define cross build settings
 # MRuby::CrossBuild.new('32bit') do |conf|
 #   toolchain :gcc
