@@ -13,9 +13,8 @@ MRuby::Build.new do |conf|
 
   # include the default GEMs
   conf.gembox 'default'
-  conf.gem '../mruby-redis'
+  conf.gem File.expand_path(File.dirname(__FILE__))
   conf.gem :github => 'matsumoto-r/mruby-sleep'
-
 
   # C compiler settings
   # conf.cc do |cc|
