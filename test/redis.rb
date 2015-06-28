@@ -90,6 +90,24 @@ assert("Redis#expire") do
   assert_nil ret2
 end
 
+assert("Redis#flushdb") do
+  r = Redis.new HOST, PORT
+  r = Redis.new HOST, PORT
+  r.set "key1", "a"
+  r.set "key2", "b"
+  ret1 = r.exists? "key1"
+  ret2 = r.exists? "key2"
+  r.flushdb
+  ret_after1 = r.exists? "key1"
+  ret_after2 = r.exists? "key2"
+  r.close
+
+  assert_true ret1
+  assert_true ret2
+  assert_false ret_after1
+  assert_false ret_after2
+end
+
 assert("Redis#del") do
   r = Redis.new HOST, PORT
   r.set "hoge", "a"
