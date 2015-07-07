@@ -367,6 +367,21 @@ assert("Redis#ttl") do
   assert_equal -2, ttl5
 end
 
+assert("Redis#keys") do
+  r = Redis.new HOST, PORT
+
+  r.set "foo", "foo"
+  r.set "bar", "bar"
+
+  only_foo = r.keys 'fo*'
+  only_bar = r.keys '*ar'
+
+  r.close
+
+  assert_equal ['foo'], only_foo
+  assert_equal ['bar'], only_bar
+end
+
 # got erro for travis ci. comment out until fix the problems
 #assert("Redis#zadd, Redis#zrange") do
 #  r = Redis.new HOST, PORT
