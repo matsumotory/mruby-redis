@@ -92,7 +92,6 @@ end
 
 assert("Redis#flushdb") do
   r = Redis.new HOST, PORT
-  r = Redis.new HOST, PORT
   r.set "key1", "a"
   r.set "key2", "b"
   ret1 = r.exists? "key1"
