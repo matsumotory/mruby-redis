@@ -394,6 +394,18 @@ assert("Redis#llen") do
   assert_equal 2, len
 end
 
+assert("Redis#lindex") do
+  r = Redis.new HOST, PORT
+
+  r.lpush('mylist', 'hello')
+  r.lpush('mylist', 'world')
+  val = r.lindex('mylist', 2)
+
+  r.close
+
+  assert_equal 'world', val
+end
+
 # got erro for travis ci. comment out until fix the problems
 #assert("Redis#zadd, Redis#zrange") do
 #  r = Redis.new HOST, PORT
