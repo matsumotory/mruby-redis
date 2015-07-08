@@ -92,7 +92,6 @@ end
 
 assert("Redis#flushdb") do
   r = Redis.new HOST, PORT
-  r = Redis.new HOST, PORT
   r.set "key1", "a"
   r.set "key2", "b"
   ret1 = r.exists? "key1"
@@ -365,6 +364,45 @@ assert("Redis#ttl") do
   assert_equal -1, ttl3
   assert_equal 1, ttl4
   assert_equal -2, ttl5
+end
+
+assert("Redis#keys") do
+  r = Redis.new HOST, PORT
+
+  r.set "foo", "foo"
+  r.set "bar", "bar"
+
+  only_foo = r.keys 'fo*'
+  only_bar = r.keys '*ar'
+
+  r.close
+
+  assert_equal ['foo'], only_foo
+  assert_equal ['bar'], only_bar
+end
+
+assert("Redis#llen") do
+  r = Redis.new HOST, PORT
+
+  r.lpush('mylist', 'hello')
+  r.lpush('mylist', 'world')
+  len = r.llen('mylist')
+
+  r.close
+
+  assert_equal 2, len
+end
+
+assert("Redis#lindex") do
+  r = Redis.new HOST, PORT
+
+  r.lpush('mylist', 'hello')
+  r.lpush('mylist', 'world')
+  val = r.lindex('mylist', 2)
+
+  r.close
+
+  assert_equal 'world', val
 end
 
 # got erro for travis ci. comment out until fix the problems
