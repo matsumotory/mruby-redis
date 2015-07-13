@@ -65,7 +65,7 @@ mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
 
     rc = redisConnect(mrb_str_to_cstr(mrb, host), mrb_fixnum(port));
     if (rc->err)
-        mrb_raise(mrb, E_RUNTIME_ERROR, "redis connection faild.");
+        mrb_raise(mrb, E_RUNTIME_ERROR, "redis connection failed.");
 
     DATA_PTR(self) = rc;
 
