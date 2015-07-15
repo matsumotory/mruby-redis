@@ -27,7 +27,7 @@ key      = "hoge"
 database = 0
 
 puts "> redis connect #{host}: #{port.to_s}"
-r = Redis.new host, port
+r = Redis.new host, port # the 3rd optional parameter is `timeout` (in seconds)
 
 puts "> redis select: #{database}"
 r.select database

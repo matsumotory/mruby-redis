@@ -405,6 +405,13 @@ assert("Redis#lindex") do
   assert_equal 'world', val
 end
 
+assert("Redis#new") do
+  assert_raise(RuntimeError) { Redis.new "10.10.10.10", 6379 }
+  assert_raise(RuntimeError) { Redis.new "10.10.10.10", 6379, 0 }
+  assert_raise(RuntimeError) { Redis.new "10.10.10.10", 6379, 1 }
+  assert_raise(TypeError)    { Redis.new "10.10.10.10", 6379, nil }
+end
+
 # got erro for travis ci. comment out until fix the problems
 #assert("Redis#zadd, Redis#zrange") do
 #  r = Redis.new HOST, PORT
