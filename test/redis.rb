@@ -359,11 +359,11 @@ assert("Redis#ttl") do
 
   r.close
 
-  assert_equal 1, ttl
-  assert_equal -2, ttl2
-  assert_equal -1, ttl3
-  assert_equal 1, ttl4
-  assert_equal -2, ttl5
+  assert_equal( 1, ttl)
+  assert_equal(-2, ttl2)
+  assert_equal(-1, ttl3)
+  assert_equal( 1, ttl4)
+  assert_equal(-2, ttl5)
 end
 
 assert("Redis#keys") do
