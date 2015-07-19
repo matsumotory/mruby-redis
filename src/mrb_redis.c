@@ -69,8 +69,11 @@ mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
     }
 
     rc = redisConnectWithTimeout(mrb_str_to_cstr(mrb, host), mrb_fixnum(port), timeout_struct);
-    if (rc->err)
-        mrb_raise(mrb, E_RUNTIME_ERROR, "redis connection failed.");
+    if (rc->err) {
+      struct RClass *redis = mrb_class_get(mrb, "Redis");
+      struct RClass *connectionError = mrb_class_get_under(mrb, redis, "ConnectionError");
+      mrb_raise(mrb, connectionError, "redis connection failed.");
+    }
 
     DATA_PTR(self) = rc;
 
@@ -696,6 +699,8 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     struct RClass *redis;
 
     redis = mrb_define_class(mrb, "Redis", mrb->object_class);
+
+    mrb_define_class_under(mrb, redis, "ConnectionError", E_RUNTIME_ERROR);
 
     mrb_define_method(mrb, redis, "initialize", mrb_redis_connect, MRB_ARGS_ANY());
     mrb_define_method(mrb, redis, "select", mrb_redis_select, MRB_ARGS_REQ(1));
