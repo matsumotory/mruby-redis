@@ -359,11 +359,11 @@ assert("Redis#ttl") do
 
   r.close
 
-  assert_equal 1, ttl
-  assert_equal -2, ttl2
-  assert_equal -1, ttl3
-  assert_equal 1, ttl4
-  assert_equal -2, ttl5
+  assert_equal( 1, ttl)
+  assert_equal(-2, ttl2)
+  assert_equal(-1, ttl3)
+  assert_equal( 1, ttl4)
+  assert_equal(-2, ttl5)
 end
 
 assert("Redis#keys") do
@@ -403,6 +403,13 @@ assert("Redis#lindex") do
   r.close
 
   assert_equal 'world', val
+end
+
+assert("Redis#new") do
+  assert_raise(RuntimeError) { Redis.new "10.10.10.10", 6379 }
+  assert_raise(RuntimeError) { Redis.new "10.10.10.10", 6379, 0 }
+  assert_raise(RuntimeError) { Redis.new "10.10.10.10", 6379, 1 }
+  assert_raise(TypeError)    { Redis.new "10.10.10.10", 6379, nil }
 end
 
 # got erro for travis ci. comment out until fix the problems
