@@ -6,7 +6,7 @@ file :mruby do
   #sh "tar -xvzf mruby.tar.gz"
   #sh "rm mruby.tar.gz"
   #sh "mv mruby-#{MRUBY_VERSION} mruby"
-  sh "git clone git://github.com/mruby/mruby.git"
+  sh "git clone --depth=1 git://github.com/mruby/mruby.git"
 end
 
 desc "compile binary"
