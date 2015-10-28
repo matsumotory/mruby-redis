@@ -460,6 +460,20 @@ mrb_value mrb_redis_lindex(mrb_state *mrb, mrb_value self)
     }
 }
 
+mrb_value mrb_redis_scard(mrb_state *mrb, mrb_value self)
+{
+  mrb_value key;
+  mrb_int integer;
+  redisContext *rc = DATA_PTR(self);
+
+  mrb_get_args(mrb, "o", &key);
+  redisReply *rr = redisCommand(rc,"SCARD %s", mrb_str_to_cstr(mrb, key));
+  integer = rr->integer;
+  freeReplyObject(rr);
+
+  return  mrb_fixnum_value(integer);
+}
+
 mrb_value mrb_redis_hset(mrb_state *mrb, mrb_value self) {
     mrb_value key, field, val;
     redisContext *rc = DATA_PTR(self);
@@ -509,11 +523,11 @@ mrb_value mrb_redis_hgetall(mrb_state *mrb, mrb_value self)
     if (rr->type == REDIS_REPLY_ARRAY) {
         if (rr->elements > 0) {
             int i;
-            
+
             hash = mrb_hash_new(mrb);
             for (i = 0; i < rr->elements; i += 2) {
                 mrb_hash_set(mrb, hash,
-                             mrb_str_new(mrb, rr->element[i]->str, rr->element[i]->len), 
+                             mrb_str_new(mrb, rr->element[i]->str, rr->element[i]->len),
                              mrb_str_new(mrb, rr->element[i + 1]->str, rr->element[i + 1]->len));
             }
         }
@@ -726,6 +740,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     mrb_define_method(mrb, redis, "lrange", mrb_redis_lrange, MRB_ARGS_ANY());
     mrb_define_method(mrb, redis, "ltrim", mrb_redis_ltrim, MRB_ARGS_ANY());
     mrb_define_method(mrb, redis, "lindex", mrb_redis_lindex, MRB_ARGS_REQ(2));
+    mrb_define_method(mrb, redis, "scard", mrb_redis_scard, MRB_ARGS_REQ(1));
     mrb_define_method(mrb, redis, "hset", mrb_redis_hset, MRB_ARGS_REQ(3));
     mrb_define_method(mrb, redis, "hget", mrb_redis_hget, MRB_ARGS_REQ(2));
     mrb_define_method(mrb, redis, "hgetall", mrb_redis_hgetall, MRB_ARGS_REQ(1));
