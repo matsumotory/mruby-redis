@@ -76,10 +76,10 @@ assert("Redis#expire") do
   expire2 = r.expire "hoge", 1
   ret = r.get "hoge"
 
-  # 1000_000 micro sec is sensitive time 
+  # 1000_000 micro sec is sensitive time
   # so 1100_000 micro sec is sufficient time.
   usleep 1100_000
-  
+
   ret2 = r.get "hoge"
 
   r.close
@@ -334,6 +334,19 @@ assert("Redis#lpop") do
   assert_equal ["two", "three"], range2
 end
 
+assert("Redis#sadd", "Redis#sismember", "Redis#scard") do
+  r = Redis.new HOST, PORT
+
+  assert_equal r.scard('set'), 0
+
+  r.sadd 'set', 'bar'
+
+  assert_equal r.sismember('set', 'bar'), 1
+  assert_equal r.sismember('set', 'buzz'), 0
+
+  assert_equal r.scard('set'), 1
+end
+
 assert("Redis#ttl") do
   r = Redis.new HOST, PORT
   r.del "hoge"
@@ -341,14 +354,14 @@ assert("Redis#ttl") do
   r.del "fuga"
   r.del "fuga\0"
 
-  r.set "hoge", "a"  
-  r.set "hoge\0", "a"  
+  r.set "hoge", "a"
+  r.set "hoge\0", "a"
   r.expire "hoge", 1
   r.expire "hoge\0", 1
   ttl = r.ttl "hoge"
   ttl4 = r.ttl "hoge\0"
 
-  # 1_000_000 micro sec is sensitive time 
+  # 1_000_000 micro sec is sensitive time
   # so 1_100_000 micro sec is sufficient time.
   usleep 1_100_000
 
