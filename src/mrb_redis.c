@@ -492,6 +492,29 @@ mrb_value mrb_redis_sismember(mrb_state *mrb, mrb_value self)
     return  mrb_fixnum_value(integer);
 }
 
+mrb_value mrb_redis_smembers(mrb_state *mrb, mrb_value self)
+{
+    int i;
+    mrb_value array, key;
+    redisContext *rc = DATA_PTR(self);
+
+    mrb_get_args(mrb, "o", &key);
+    redisReply *rr = redisCommand(rc,"SMEMBERS %s", mrb_str_to_cstr(mrb, key));
+    if (rr->type == REDIS_REPLY_ARRAY) {
+        array = mrb_ary_new(mrb);
+        for (i = 0; i < rr->elements; i++) {
+            mrb_ary_push(mrb, array, mrb_str_new(mrb, rr->element[i]->str, rr->element[i]->len));
+        }
+    } else {
+        freeReplyObject(rr);
+        return mrb_nil_value();
+    }
+
+    freeReplyObject(rr);
+
+    return array;
+}
+
 mrb_value mrb_redis_scard(mrb_state *mrb, mrb_value self)
 {
   mrb_value key;
@@ -774,6 +797,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     mrb_define_method(mrb, redis, "lindex", mrb_redis_lindex, MRB_ARGS_REQ(2));
     mrb_define_method(mrb, redis, "sadd", mrb_redis_sadd, MRB_ARGS_REQ(2));
     mrb_define_method(mrb, redis, "sismember", mrb_redis_sismember, MRB_ARGS_REQ(2));
+    mrb_define_method(mrb, redis, "smembers", mrb_redis_smembers, MRB_ARGS_REQ(1));
     mrb_define_method(mrb, redis, "scard", mrb_redis_scard, MRB_ARGS_REQ(1));
     mrb_define_method(mrb, redis, "hset", mrb_redis_hset, MRB_ARGS_REQ(3));
     mrb_define_method(mrb, redis, "hget", mrb_redis_hget, MRB_ARGS_REQ(2));
