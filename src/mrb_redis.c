@@ -499,7 +499,7 @@ mrb_value mrb_redis_smembers(mrb_state *mrb, mrb_value self)
     redisContext *rc = DATA_PTR(self);
 
     mrb_get_args(mrb, "o", &key);
-    redisReply *rr = redisCommand(rc,"SMEMBERS %s", mrb_str_to_cstr(mrb, key));
+    redisReply *rr = redisCommand(rc, "SMEMBERS %s", mrb_str_to_cstr(mrb, key));
     if (rr->type == REDIS_REPLY_ARRAY) {
         array = mrb_ary_new(mrb);
         for (i = 0; i < rr->elements; i++) {
