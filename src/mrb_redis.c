@@ -476,6 +476,22 @@ mrb_value mrb_redis_sadd(mrb_state *mrb, mrb_value self)
     return  mrb_fixnum_value(integer);
 }
 
+mrb_value mrb_redis_sismember(mrb_state *mrb, mrb_value self)
+{
+    mrb_value key, val;
+    mrb_int integer;
+    redisContext *rc = DATA_PTR(self);
+
+    mrb_get_args(mrb, "oo", &key, &val);
+    const char *argv[] = {"SISMEMBER", RSTRING_PTR(key), RSTRING_PTR(val)};
+    size_t lens[] = {9, RSTRING_LEN(key), RSTRING_LEN(val)};
+    redisReply *rr = redisCommandArgv(rc, 3, argv, lens);
+    integer = rr->integer;
+    freeReplyObject(rr);
+
+    return  mrb_fixnum_value(integer);
+}
+
 mrb_value mrb_redis_scard(mrb_state *mrb, mrb_value self)
 {
   mrb_value key;
@@ -757,6 +773,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     mrb_define_method(mrb, redis, "ltrim", mrb_redis_ltrim, MRB_ARGS_ANY());
     mrb_define_method(mrb, redis, "lindex", mrb_redis_lindex, MRB_ARGS_REQ(2));
     mrb_define_method(mrb, redis, "sadd", mrb_redis_sadd, MRB_ARGS_REQ(2));
+    mrb_define_method(mrb, redis, "sismember", mrb_redis_sismember, MRB_ARGS_REQ(2));
     mrb_define_method(mrb, redis, "scard", mrb_redis_scard, MRB_ARGS_REQ(1));
     mrb_define_method(mrb, redis, "hset", mrb_redis_hset, MRB_ARGS_REQ(3));
     mrb_define_method(mrb, redis, "hget", mrb_redis_hget, MRB_ARGS_REQ(2));
