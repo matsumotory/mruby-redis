@@ -439,7 +439,15 @@ end
 #
 #  assert_equal ["b", "c", "a"], ret
 #end
-#
+
+assert("Redis#zcard") do
+  r = Redis.new HOST, PORT
+  r.zadd myzset, 1, "one"
+  r.zadd myzset, 2, "two"
+
+  assert_equal 2, r.zcard(myzset)
+end
+
 #assert("Redis#zrevrange") do
 #  r = Redis.new HOST, PORT
 #  r.del "hs"
