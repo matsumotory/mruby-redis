@@ -661,6 +661,20 @@ mrb_value mrb_redis_zadd(mrb_state *mrb, mrb_value self)
     return  self;
 }
 
+mrb_value mrb_redis_zcard(mrb_state *mrb, mrb_value self)
+{
+  mrb_value key;
+  mrb_int integer;
+  redisContext *rc = DATA_PTR(self);
+
+  mrb_get_args(mrb, "o", &key);
+  redisReply *rr = redisCommand(rc,"ZCARD %s", mrb_str_to_cstr(mrb, key));
+  integer = rr->integer;
+  freeReplyObject(rr);
+
+  return  mrb_fixnum_value(integer);
+}
+
 mrb_value mrb_redis_basic_zrange(mrb_state *mrb, mrb_value self, const char *cmd)
 {
     int i;
@@ -806,6 +820,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
     mrb_define_method(mrb, redis, "hkeys", mrb_redis_hkeys, MRB_ARGS_REQ(1));
     mrb_define_method(mrb, redis, "ttl", mrb_redis_ttl, MRB_ARGS_REQ(2));
     mrb_define_method(mrb, redis, "zadd", mrb_redis_zadd, MRB_ARGS_REQ(3));
+    mrb_define_method(mrb, redis, "zcard", mrb_redis_zcard, MRB_ARGS_REQ(1));
     mrb_define_method(mrb, redis, "zrange", mrb_redis_zrange, MRB_ARGS_REQ(3));
     mrb_define_method(mrb, redis, "zrevrange", mrb_redis_zrevrange, MRB_ARGS_REQ(3));
     mrb_define_method(mrb, redis, "zrank", mrb_redis_zrank, MRB_ARGS_REQ(2));
