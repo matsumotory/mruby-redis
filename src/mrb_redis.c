@@ -45,13 +45,13 @@
 #define CREATE_REDIS_COMMAND_ARG1(argv, lens, cmd, arg1)                                                               \
   argv[0] = cmd;                                                                                                       \
   argv[1] = RSTRING_PTR(arg1);                                                                                         \
-  lens[0] = sizeof(cmd) - 1;                                                                                               \
+  lens[0] = sizeof(cmd) - 1;                                                                                           \
   lens[1] = RSTRING_LEN(arg1)
 #define CREATE_REDIS_COMMAND_ARG2(argv, lens, cmd, arg1, arg2)                                                         \
   argv[0] = cmd;                                                                                                       \
   argv[1] = RSTRING_PTR(arg1);                                                                                         \
   argv[2] = RSTRING_PTR(arg2);                                                                                         \
-  lens[0] = sizeof(cmd) - 1;                                                                                               \
+  lens[0] = sizeof(cmd) - 1;                                                                                           \
   lens[1] = RSTRING_LEN(arg1);                                                                                         \
   lens[2] = RSTRING_LEN(arg2)
 #define CREATE_REDIS_COMMAND_ARG3(argv, lens, cmd, arg1, arg2, arg3)                                                   \
@@ -59,20 +59,16 @@
   argv[1] = RSTRING_PTR(arg1);                                                                                         \
   argv[2] = RSTRING_PTR(arg2);                                                                                         \
   argv[3] = RSTRING_PTR(arg3);                                                                                         \
-  lens[0] = sizeof(cmd) - 1;                                                                                               \
+  lens[0] = sizeof(cmd) - 1;                                                                                           \
   lens[1] = RSTRING_LEN(arg1);                                                                                         \
   lens[2] = RSTRING_LEN(arg2);                                                                                         \
   lens[3] = RSTRING_LEN(arg3)
 
-static void redisContext_free(mrb_state *mrb, void *p)
-{
-  redisFree(p);
-}
+static void redisContext_free(mrb_state *mrb, void *p) { redisFree(p); }
 
 static const struct mrb_data_type redisContext_type = { "redisContext", redisContext_free, };
 
-mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self) {
   mrb_value host, port;
   mrb_int timeout = 1;
   struct timeval timeout_struct = { timeout, 0 };
@@ -100,8 +96,7 @@ mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
   return self;
 }
 
-mrb_value mrb_redis_select(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_select(mrb_state *mrb, mrb_value self) {
   mrb_value database;
   redisReply *rs;
 
@@ -118,8 +113,7 @@ mrb_value mrb_redis_select(mrb_state *mrb, mrb_value self)
   return self;
 }
 
-mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self) {
   mrb_value key, val;
   redisReply *rs;
   const char *argv[3];
@@ -136,8 +130,7 @@ mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
   return self;
 }
 
-mrb_value mrb_redis_get(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_get(mrb_state *mrb, mrb_value self) {
   mrb_value key;
   redisContext *rc = DATA_PTR(self);
   const char *argv[2];
@@ -159,8 +152,7 @@ mrb_value mrb_redis_get(mrb_state *mrb, mrb_value self)
   }
 }
 
-mrb_value mrb_redis_keys(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_keys(mrb_state *mrb, mrb_value self) {
   mrb_value pattern, array = mrb_nil_value();
   redisContext *rc = DATA_PTR(self);
   redisReply *rr;
@@ -181,8 +173,7 @@ mrb_value mrb_redis_keys(mrb_state *mrb, mrb_value self)
   return array;
 }
 
-mrb_value mrb_redis_exists(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_exists(mrb_state *mrb, mrb_value self) {
   mrb_value key;
   mrb_int counter;
   const char *argv[2];
@@ -201,8 +192,7 @@ mrb_value mrb_redis_exists(mrb_state *mrb, mrb_value self)
   return counter ? mrb_true_value() : mrb_false_value();
 }
 
-mrb_value mrb_redis_expire(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_expire(mrb_state *mrb, mrb_value self) {
   mrb_value key;
   mrb_int expire, counter;
   redisContext *rc = DATA_PTR(self);
@@ -223,8 +213,7 @@ mrb_value mrb_redis_expire(mrb_state *mrb, mrb_value self)
   return mrb_bool_value(counter == 1);
 }
 
-mrb_value mrb_redis_flushdb(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_flushdb(mrb_state *mrb, mrb_value self) {
   redisContext *rc = DATA_PTR(self);
   mrb_value str;
   redisReply *rs = redisCommand(rc, "FLUSHDB");
@@ -234,8 +223,7 @@ mrb_value mrb_redis_flushdb(mrb_state *mrb, mrb_value self)
   return str;
 }
 
-mrb_value mrb_redis_randomkey(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_randomkey(mrb_state *mrb, mrb_value self) {
   redisContext *rc = DATA_PTR(self);
 
   redisReply *rs = redisCommand(rc, "RANDOMKEY");
@@ -249,8 +237,7 @@ mrb_value mrb_redis_randomkey(mrb_state *mrb, mrb_value self)
   }
 }
 
-mrb_value mrb_redis_del(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_del(mrb_state *mrb, mrb_value self) {
   mrb_value key;
   redisContext *rc = DATA_PTR(self);
   const char *argv[2];
@@ -266,8 +253,7 @@ mrb_value mrb_redis_del(mrb_state *mrb, mrb_value self)
   return self;
 }
 
-mrb_value mrb_redis_incr(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_incr(mrb_state *mrb, mrb_value self) {
   mrb_value key;
   mrb_int counter;
   redisContext *rc = DATA_PTR(self);
@@ -284,8 +270,7 @@ mrb_value mrb_redis_incr(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(counter);
 }
 
-mrb_value mrb_redis_decr(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_decr(mrb_state *mrb, mrb_value self) {
   mrb_value key;
   mrb_int counter;
   redisContext *rc = DATA_PTR(self);
@@ -302,8 +287,7 @@ mrb_value mrb_redis_decr(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(counter);
 }
 
-mrb_value mrb_redis_incrby(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_incrby(mrb_state *mrb, mrb_value self) {
   mrb_value key;
   mrb_int val, counter;
   redisContext *rc = DATA_PTR(self);
@@ -322,8 +306,7 @@ mrb_value mrb_redis_incrby(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(counter);
 }
 
-mrb_value mrb_redis_decrby(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_decrby(mrb_state *mrb, mrb_value self) {
   mrb_value key;
   mrb_int val, counter;
   redisContext *rc = DATA_PTR(self);
@@ -342,8 +325,7 @@ mrb_value mrb_redis_decrby(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(counter);
 }
 
-mrb_value mrb_redis_llen(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_llen(mrb_state *mrb, mrb_value self) {
   mrb_value key;
   mrb_int integer;
   redisContext *rc = DATA_PTR(self);
@@ -357,8 +339,7 @@ mrb_value mrb_redis_llen(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(integer);
 }
 
-mrb_value mrb_redis_rpush(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_rpush(mrb_state *mrb, mrb_value self) {
   mrb_value key, val;
   mrb_int integer;
   redisContext *rc = DATA_PTR(self);
@@ -375,8 +356,7 @@ mrb_value mrb_redis_rpush(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(integer);
 }
 
-mrb_value mrb_redis_lpush(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_lpush(mrb_state *mrb, mrb_value self) {
   mrb_value key, val;
   mrb_int integer;
   redisContext *rc = DATA_PTR(self);
@@ -393,8 +373,7 @@ mrb_value mrb_redis_lpush(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(integer);
 }
 
-mrb_value mrb_redis_rpop(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_rpop(mrb_state *mrb, mrb_value self) {
   mrb_value key;
   redisContext *rc = DATA_PTR(self);
   const char *argv[2];
@@ -414,8 +393,7 @@ mrb_value mrb_redis_rpop(mrb_state *mrb, mrb_value self)
   }
 }
 
-mrb_value mrb_redis_lpop(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_lpop(mrb_state *mrb, mrb_value self) {
   mrb_value key;
   redisContext *rc = DATA_PTR(self);
   const char *argv[2];
@@ -435,8 +413,7 @@ mrb_value mrb_redis_lpop(mrb_state *mrb, mrb_value self)
   }
 }
 
-mrb_value mrb_redis_lrange(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_lrange(mrb_state *mrb, mrb_value self) {
   int i;
   mrb_value list, array;
   mrb_int arg1, arg2;
@@ -467,8 +444,7 @@ mrb_value mrb_redis_lrange(mrb_state *mrb, mrb_value self)
   return array;
 }
 
-mrb_value mrb_redis_ltrim(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_ltrim(mrb_state *mrb, mrb_value self) {
   mrb_value list;
   mrb_int arg1, arg2, integer;
   redisContext *rc = DATA_PTR(self);
@@ -488,8 +464,7 @@ mrb_value mrb_redis_ltrim(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(integer);
 }
 
-mrb_value mrb_redis_lindex(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_lindex(mrb_state *mrb, mrb_value self) {
   mrb_value key;
   mrb_int pos;
   redisContext *rc = DATA_PTR(self);
@@ -507,8 +482,7 @@ mrb_value mrb_redis_lindex(mrb_state *mrb, mrb_value self)
   }
 }
 
-mrb_value mrb_redis_sadd(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_sadd(mrb_state *mrb, mrb_value self) {
   mrb_value key, val;
   mrb_int integer;
   const char *argv[3];
@@ -527,8 +501,7 @@ mrb_value mrb_redis_sadd(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(integer);
 }
 
-mrb_value mrb_redis_sismember(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_sismember(mrb_state *mrb, mrb_value self) {
   mrb_value key, val;
   mrb_int integer;
   redisContext *rc = DATA_PTR(self);
@@ -545,8 +518,7 @@ mrb_value mrb_redis_sismember(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(integer);
 }
 
-mrb_value mrb_redis_smembers(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_smembers(mrb_state *mrb, mrb_value self) {
   int i;
   mrb_value array, key;
   redisContext *rc = DATA_PTR(self);
@@ -569,8 +541,7 @@ mrb_value mrb_redis_smembers(mrb_state *mrb, mrb_value self)
   return array;
 }
 
-mrb_value mrb_redis_scard(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_scard(mrb_state *mrb, mrb_value self) {
   mrb_value key;
   mrb_int integer;
   redisContext *rc = DATA_PTR(self);
@@ -584,8 +555,7 @@ mrb_value mrb_redis_scard(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(integer);
 }
 
-mrb_value mrb_redis_hset(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_hset(mrb_state *mrb, mrb_value self) {
   mrb_value key, field, val;
   redisContext *rc = DATA_PTR(self);
   mrb_int integer;
@@ -602,8 +572,7 @@ mrb_value mrb_redis_hset(mrb_state *mrb, mrb_value self)
   return integer ? mrb_true_value() : mrb_false_value();
 }
 
-mrb_value mrb_redis_hget(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_hget(mrb_state *mrb, mrb_value self) {
   mrb_value key, field;
   redisContext *rc = DATA_PTR(self);
   const char *argv[3];
@@ -623,8 +592,7 @@ mrb_value mrb_redis_hget(mrb_state *mrb, mrb_value self)
   }
 }
 
-mrb_value mrb_redis_hgetall(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_hgetall(mrb_state *mrb, mrb_value self) {
   mrb_value obj, hash = mrb_nil_value();
   redisContext *rc = DATA_PTR(self);
   const char *argv[2];
@@ -649,8 +617,7 @@ mrb_value mrb_redis_hgetall(mrb_state *mrb, mrb_value self)
   return hash;
 }
 
-mrb_value mrb_redis_hdel(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_hdel(mrb_state *mrb, mrb_value self) {
   mrb_value key, val;
   mrb_int integer;
   redisContext *rc = DATA_PTR(self);
@@ -667,8 +634,7 @@ mrb_value mrb_redis_hdel(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(integer);
 }
 
-mrb_value mrb_redis_hkeys(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_hkeys(mrb_state *mrb, mrb_value self) {
   mrb_value key, array = mrb_nil_value();
   redisContext *rc = DATA_PTR(self);
   const char *argv[2];
@@ -692,8 +658,7 @@ mrb_value mrb_redis_hkeys(mrb_state *mrb, mrb_value self)
   return array;
 }
 
-mrb_value mrb_redis_ttl(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_ttl(mrb_state *mrb, mrb_value self) {
   mrb_value key;
   redisContext *rc = DATA_PTR(self);
   mrb_int integer;
@@ -710,8 +675,7 @@ mrb_value mrb_redis_ttl(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(integer);
 }
 
-mrb_value mrb_redis_zadd(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_zadd(mrb_state *mrb, mrb_value self) {
   mrb_value key, member;
   mrb_float score;
   redisContext *rc = DATA_PTR(self);
@@ -729,8 +693,7 @@ mrb_value mrb_redis_zadd(mrb_state *mrb, mrb_value self)
   return self;
 }
 
-mrb_value mrb_redis_zcard(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_zcard(mrb_state *mrb, mrb_value self) {
   mrb_value key;
   mrb_int integer;
   redisContext *rc = DATA_PTR(self);
@@ -744,8 +707,7 @@ mrb_value mrb_redis_zcard(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(integer);
 }
 
-mrb_value mrb_redis_basic_zrange(mrb_state *mrb, mrb_value self, const char *cmd)
-{
+mrb_value mrb_redis_basic_zrange(mrb_state *mrb, mrb_value self, const char *cmd) {
   int i;
   mrb_value list, array;
   mrb_int arg1, arg2;
@@ -775,18 +737,11 @@ mrb_value mrb_redis_basic_zrange(mrb_state *mrb, mrb_value self, const char *cmd
   return array;
 }
 
-mrb_value mrb_redis_zrange(mrb_state *mrb, mrb_value self)
-{
-  return mrb_redis_basic_zrange(mrb, self, "ZRANGE");
-}
+mrb_value mrb_redis_zrange(mrb_state *mrb, mrb_value self) { return mrb_redis_basic_zrange(mrb, self, "ZRANGE"); }
 
-mrb_value mrb_redis_zrevrange(mrb_state *mrb, mrb_value self)
-{
-  return mrb_redis_basic_zrange(mrb, self, "ZREVRANGE");
-}
+mrb_value mrb_redis_zrevrange(mrb_state *mrb, mrb_value self) { return mrb_redis_basic_zrange(mrb, self, "ZREVRANGE"); }
 
-mrb_value mrb_redis_basic_zrank(mrb_state *mrb, mrb_value self, const char *cmd)
-{
+mrb_value mrb_redis_basic_zrank(mrb_state *mrb, mrb_value self, const char *cmd) {
   mrb_value key, member;
   mrb_int rank;
   redisContext *rc = DATA_PTR(self);
@@ -803,18 +758,11 @@ mrb_value mrb_redis_basic_zrank(mrb_state *mrb, mrb_value self, const char *cmd)
   return mrb_fixnum_value(rank);
 }
 
-mrb_value mrb_redis_zrank(mrb_state *mrb, mrb_value self)
-{
-  return mrb_redis_basic_zrank(mrb, self, "ZRANK");
-}
+mrb_value mrb_redis_zrank(mrb_state *mrb, mrb_value self) { return mrb_redis_basic_zrank(mrb, self, "ZRANK"); }
 
-mrb_value mrb_redis_zrevrank(mrb_state *mrb, mrb_value self)
-{
-  return mrb_redis_basic_zrank(mrb, self, "ZREVRANK");
-}
+mrb_value mrb_redis_zrevrank(mrb_state *mrb, mrb_value self) { return mrb_redis_basic_zrank(mrb, self, "ZREVRANK"); }
 
-mrb_value mrb_redis_zscore(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_zscore(mrb_state *mrb, mrb_value self) {
   mrb_value key, member, score;
   redisContext *rc = DATA_PTR(self);
   const char *argv[3];
@@ -830,8 +778,7 @@ mrb_value mrb_redis_zscore(mrb_state *mrb, mrb_value self)
   return score;
 }
 
-mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self) {
   mrb_value channel, msg;
   redisContext *rc = DATA_PTR(self);
   const char *argv[3];
@@ -846,8 +793,7 @@ mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self)
   return self;
 }
 
-mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self)
-{
+mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self) {
   redisContext *rc = DATA_PTR(self);
 
   redisFree(rc);
@@ -855,8 +801,7 @@ mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self)
   return mrb_nil_value();
 }
 
-void mrb_mruby_redis_gem_init(mrb_state *mrb)
-{
+void mrb_mruby_redis_gem_init(mrb_state *mrb) {
   struct RClass *redis;
 
   redis = mrb_define_class(mrb, "Redis", mrb->object_class);
@@ -909,8 +854,6 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   DONE;
 }
 
-void mrb_mruby_redis_gem_final(mrb_state *mrb)
-{
-}
+void mrb_mruby_redis_gem_final(mrb_state *mrb) {}
 
 //#endif
