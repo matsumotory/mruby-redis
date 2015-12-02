@@ -122,7 +122,7 @@ mrb_value mrb_redis_get(mrb_state *mrb, mrb_value self)
     size_t lens[] = {3, RSTRING_LEN(key)};
     redisReply *rs = redisCommandArgv(rc, 2, argv, lens);
     if (rs->type == REDIS_REPLY_STRING) {
-        mrbsvalue str = mrb_str_new(mrb, rs->str, rs->len);
+        mrb_value str = mrb_str_new(mrb, rs->str, rs->len);
         freeReplyObject(rs);
         return str;
     } else {
