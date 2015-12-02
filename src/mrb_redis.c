@@ -45,13 +45,13 @@
 #define CREATE_REDIS_COMMAND_ARG1(argv, lens, cmd, arg1)                                                               \
   argv[0] = cmd;                                                                                                       \
   argv[1] = RSTRING_PTR(arg1);                                                                                         \
-  lens[0] = sizeof(cmd);                                                                                               \
+  lens[0] = sizeof(cmd) - 1;                                                                                               \
   lens[1] = RSTRING_LEN(arg1)
 #define CREATE_REDIS_COMMAND_ARG2(argv, lens, cmd, arg1, arg2)                                                         \
   argv[0] = cmd;                                                                                                       \
   argv[1] = RSTRING_PTR(arg1);                                                                                         \
   argv[2] = RSTRING_PTR(arg2);                                                                                         \
-  lens[0] = sizeof(cmd);                                                                                               \
+  lens[0] = sizeof(cmd) - 1;                                                                                               \
   lens[1] = RSTRING_LEN(arg1);                                                                                         \
   lens[2] = RSTRING_LEN(arg2)
 #define CREATE_REDIS_COMMAND_ARG3(argv, lens, cmd, arg1, arg2, arg3)                                                   \
@@ -59,7 +59,7 @@
   argv[1] = RSTRING_PTR(arg1);                                                                                         \
   argv[2] = RSTRING_PTR(arg2);                                                                                         \
   argv[3] = RSTRING_PTR(arg3);                                                                                         \
-  lens[0] = sizeof(cmd);                                                                                               \
+  lens[0] = sizeof(cmd) - 1;                                                                                               \
   lens[1] = RSTRING_LEN(arg1);                                                                                         \
   lens[2] = RSTRING_LEN(arg2);                                                                                         \
   lens[3] = RSTRING_LEN(arg3)
