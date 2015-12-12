@@ -798,6 +798,9 @@ static mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self) {
 
   redisFree(rc);
 
+  DATA_PTR(self) = NULL;
+  DATA_TYPE(self) = NULL;
+
   return mrb_nil_value();
 }
 
