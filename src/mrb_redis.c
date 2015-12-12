@@ -798,6 +798,9 @@ static mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self) {
 
   redisFree(rc);
 
+  DATA_PTR(self) = NULL;
+  DATA_TYPE(self) = NULL;
+
   return mrb_nil_value();
 }
 
@@ -805,6 +808,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb) {
   struct RClass *redis;
 
   redis = mrb_define_class(mrb, "Redis", mrb->object_class);
+  MRB_SET_INSTANCE_TT(redis, MRB_TT_DATA);
 
   mrb_define_class_under(mrb, redis, "ConnectionError", E_RUNTIME_ERROR);
 
