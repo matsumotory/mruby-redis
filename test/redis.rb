@@ -448,6 +448,22 @@ assert("Redis#zcard") do
   assert_equal 2, r.zcard("myzset")
 end
 
+assert("Pipelined commands") do
+  redis = Redis.new HOST, PORT
+  redis.queue(:set, "mruby-redis-test:foo", "bar")
+  redis.queue(:get, "mruby-redis-test:foo")
+  assert_equal(:OK,   redis.reply)
+  assert_equal("bar", redis.reply)
+
+  redis.queue(:set, "mruby-redis-test:foo", "bar")
+  redis.queue(:get, "mruby-redis-test:foo")
+  assert_equal([:OK, "bar"], redis.bulk_reply)
+
+  redis.queue(:nonexistant)
+  assert_kind_of(Redis::ReplyError, redis.reply)
+  redis.del("mruby-redis-test:foo")
+end
+
 #assert("Redis#zrevrange") do
 #  r = Redis.new HOST, PORT
 #  r.del "hs"
