@@ -805,6 +805,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb) {
   struct RClass *redis;
 
   redis = mrb_define_class(mrb, "Redis", mrb->object_class);
+  MRB_SET_INSTANCE_TT(redis, MRB_TT_DATA);
 
   mrb_define_class_under(mrb, redis, "ConnectionError", E_RUNTIME_ERROR);
 
