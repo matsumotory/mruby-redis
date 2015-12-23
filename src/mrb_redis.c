@@ -44,7 +44,6 @@
 #include <mruby/error.h>
 #include <mruby/throw.h>
 
-
 #define DONE mrb_gc_arena_restore(mrb, 0);
 
 #define CREATE_REDIS_COMMAND_ARG1(argv, lens, cmd, arg1)                                                               \
@@ -69,36 +68,43 @@
   lens[2] = RSTRING_LEN(arg2);                                                                                         \
   lens[3] = RSTRING_LEN(arg3)
 
-static void redisContext_free(mrb_state *mrb, void *p) { redisFree(p); }
+static void redisContext_free(mrb_state *mrb, void *p)
+{
+  redisFree(p);
+}
 
-static const struct mrb_data_type redisContext_type = { "redisContext", redisContext_free, };
+static const struct mrb_data_type redisContext_type = {
+    "redisContext", redisContext_free,
+};
 
-static inline void mrb_redis_check_error(redisContext *context, mrb_state *mrb) {
+static inline void mrb_redis_check_error(redisContext *context, mrb_state *mrb)
+{
   if (context->err != 0) {
     if (errno != 0) {
       mrb_sys_fail(mrb, context->errstr);
     } else {
       switch (context->err) {
-        case REDIS_ERR_EOF:
-          mrb_raise(mrb, E_EOF_ERROR, context->errstr);
-          break;
-        case REDIS_ERR_PROTOCOL:
-          mrb_raise(mrb, E_REDIS_ERR_PROTOCOL, context->errstr);
-          break;
-        case REDIS_ERR_OOM:
-          mrb_raise(mrb, E_REDIS_ERR_OOM, context->errstr);
-          break;
-        default:
-          mrb_raise(mrb, E_REDIS_ERROR, context->errstr);
+      case REDIS_ERR_EOF:
+        mrb_raise(mrb, E_EOF_ERROR, context->errstr);
+        break;
+      case REDIS_ERR_PROTOCOL:
+        mrb_raise(mrb, E_REDIS_ERR_PROTOCOL, context->errstr);
+        break;
+      case REDIS_ERR_OOM:
+        mrb_raise(mrb, E_REDIS_ERR_OOM, context->errstr);
+        break;
+      default:
+        mrb_raise(mrb, E_REDIS_ERROR, context->errstr);
       }
     }
   }
 }
 
-static mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
+{
   mrb_value host, port;
   mrb_int timeout = 1;
-  struct timeval timeout_struct = { timeout, 0 };
+  struct timeval timeout_struct = {timeout, 0};
 
   redisContext *rc = (redisContext *)DATA_PTR(self);
   if (rc) {
@@ -121,7 +127,8 @@ static mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self) {
   return self;
 }
 
-static mrb_value mrb_redis_select(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_select(mrb_state *mrb, mrb_value self)
+{
   mrb_value database;
   redisReply *rs;
 
@@ -138,7 +145,8 @@ static mrb_value mrb_redis_select(mrb_state *mrb, mrb_value self) {
   return self;
 }
 
-static mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
+{
   mrb_value key, val;
   redisReply *rs;
   const char *argv[3];
@@ -155,7 +163,8 @@ static mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self) {
   return self;
 }
 
-static mrb_value mrb_redis_get(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_get(mrb_state *mrb, mrb_value self)
+{
   mrb_value key;
   redisContext *rc = DATA_PTR(self);
   const char *argv[2];
@@ -177,7 +186,8 @@ static mrb_value mrb_redis_get(mrb_state *mrb, mrb_value self) {
   }
 }
 
-static mrb_value mrb_redis_keys(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_keys(mrb_state *mrb, mrb_value self)
+{
   mrb_value pattern, array = mrb_nil_value();
   redisContext *rc = DATA_PTR(self);
   redisReply *rr;
@@ -198,7 +208,8 @@ static mrb_value mrb_redis_keys(mrb_state *mrb, mrb_value self) {
   return array;
 }
 
-static mrb_value mrb_redis_exists(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_exists(mrb_state *mrb, mrb_value self)
+{
   mrb_value key;
   mrb_int counter;
   const char *argv[2];
@@ -217,7 +228,8 @@ static mrb_value mrb_redis_exists(mrb_state *mrb, mrb_value self) {
   return counter ? mrb_true_value() : mrb_false_value();
 }
 
-static mrb_value mrb_redis_expire(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_expire(mrb_state *mrb, mrb_value self)
+{
   mrb_value key;
   mrb_int expire, counter;
   redisContext *rc = DATA_PTR(self);
@@ -238,7 +250,8 @@ static mrb_value mrb_redis_expire(mrb_state *mrb, mrb_value self) {
   return mrb_bool_value(counter == 1);
 }
 
-static mrb_value mrb_redis_flushdb(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_flushdb(mrb_state *mrb, mrb_value self)
+{
   redisContext *rc = DATA_PTR(self);
   mrb_value str;
   redisReply *rs = redisCommand(rc, "FLUSHDB");
@@ -248,7 +261,8 @@ static mrb_value mrb_redis_flushdb(mrb_state *mrb, mrb_value self) {
   return str;
 }
 
-static mrb_value mrb_redis_randomkey(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_randomkey(mrb_state *mrb, mrb_value self)
+{
   redisContext *rc = DATA_PTR(self);
 
   redisReply *rs = redisCommand(rc, "RANDOMKEY");
@@ -262,7 +276,8 @@ static mrb_value mrb_redis_randomkey(mrb_state *mrb, mrb_value self) {
   }
 }
 
-static mrb_value mrb_redis_del(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_del(mrb_state *mrb, mrb_value self)
+{
   mrb_value key;
   redisContext *rc = DATA_PTR(self);
   const char *argv[2];
@@ -278,7 +293,8 @@ static mrb_value mrb_redis_del(mrb_state *mrb, mrb_value self) {
   return self;
 }
 
-static mrb_value mrb_redis_incr(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_incr(mrb_state *mrb, mrb_value self)
+{
   mrb_value key;
   mrb_int counter;
   redisContext *rc = DATA_PTR(self);
@@ -295,7 +311,8 @@ static mrb_value mrb_redis_incr(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(counter);
 }
 
-static mrb_value mrb_redis_decr(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_decr(mrb_state *mrb, mrb_value self)
+{
   mrb_value key;
   mrb_int counter;
   redisContext *rc = DATA_PTR(self);
@@ -312,7 +329,8 @@ static mrb_value mrb_redis_decr(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(counter);
 }
 
-static mrb_value mrb_redis_incrby(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_incrby(mrb_state *mrb, mrb_value self)
+{
   mrb_value key;
   mrb_int val, counter;
   redisContext *rc = DATA_PTR(self);
@@ -331,7 +349,8 @@ static mrb_value mrb_redis_incrby(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(counter);
 }
 
-static mrb_value mrb_redis_decrby(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_decrby(mrb_state *mrb, mrb_value self)
+{
   mrb_value key;
   mrb_int val, counter;
   redisContext *rc = DATA_PTR(self);
@@ -350,7 +369,8 @@ static mrb_value mrb_redis_decrby(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(counter);
 }
 
-static mrb_value mrb_redis_llen(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_llen(mrb_state *mrb, mrb_value self)
+{
   mrb_value key;
   mrb_int integer;
   redisContext *rc = DATA_PTR(self);
@@ -364,7 +384,8 @@ static mrb_value mrb_redis_llen(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(integer);
 }
 
-static mrb_value mrb_redis_rpush(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_rpush(mrb_state *mrb, mrb_value self)
+{
   mrb_value key, val;
   mrb_int integer;
   redisContext *rc = DATA_PTR(self);
@@ -381,7 +402,8 @@ static mrb_value mrb_redis_rpush(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(integer);
 }
 
-static mrb_value mrb_redis_lpush(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_lpush(mrb_state *mrb, mrb_value self)
+{
   mrb_value key, val;
   mrb_int integer;
   redisContext *rc = DATA_PTR(self);
@@ -398,7 +420,8 @@ static mrb_value mrb_redis_lpush(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(integer);
 }
 
-static mrb_value mrb_redis_rpop(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_rpop(mrb_state *mrb, mrb_value self)
+{
   mrb_value key;
   redisContext *rc = DATA_PTR(self);
   const char *argv[2];
@@ -418,7 +441,8 @@ static mrb_value mrb_redis_rpop(mrb_state *mrb, mrb_value self) {
   }
 }
 
-static mrb_value mrb_redis_lpop(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_lpop(mrb_state *mrb, mrb_value self)
+{
   mrb_value key;
   redisContext *rc = DATA_PTR(self);
   const char *argv[2];
@@ -438,7 +462,8 @@ static mrb_value mrb_redis_lpop(mrb_state *mrb, mrb_value self) {
   }
 }
 
-static mrb_value mrb_redis_lrange(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_lrange(mrb_state *mrb, mrb_value self)
+{
   int i;
   mrb_value list, array;
   mrb_int arg1, arg2;
@@ -469,7 +494,8 @@ static mrb_value mrb_redis_lrange(mrb_state *mrb, mrb_value self) {
   return array;
 }
 
-static mrb_value mrb_redis_ltrim(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_ltrim(mrb_state *mrb, mrb_value self)
+{
   mrb_value list;
   mrb_int arg1, arg2, integer;
   redisContext *rc = DATA_PTR(self);
@@ -489,7 +515,8 @@ static mrb_value mrb_redis_ltrim(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(integer);
 }
 
-static mrb_value mrb_redis_lindex(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_lindex(mrb_state *mrb, mrb_value self)
+{
   mrb_value key;
   mrb_int pos;
   redisContext *rc = DATA_PTR(self);
@@ -507,7 +534,8 @@ static mrb_value mrb_redis_lindex(mrb_state *mrb, mrb_value self) {
   }
 }
 
-static mrb_value mrb_redis_sadd(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_sadd(mrb_state *mrb, mrb_value self)
+{
   mrb_value key, val;
   mrb_int integer;
   const char *argv[3];
@@ -526,7 +554,8 @@ static mrb_value mrb_redis_sadd(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(integer);
 }
 
-static mrb_value mrb_redis_sismember(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_sismember(mrb_state *mrb, mrb_value self)
+{
   mrb_value key, val;
   mrb_int integer;
   redisContext *rc = DATA_PTR(self);
@@ -543,7 +572,8 @@ static mrb_value mrb_redis_sismember(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(integer);
 }
 
-static mrb_value mrb_redis_smembers(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_smembers(mrb_state *mrb, mrb_value self)
+{
   int i;
   mrb_value array, key;
   redisContext *rc = DATA_PTR(self);
@@ -566,7 +596,8 @@ static mrb_value mrb_redis_smembers(mrb_state *mrb, mrb_value self) {
   return array;
 }
 
-static mrb_value mrb_redis_scard(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_scard(mrb_state *mrb, mrb_value self)
+{
   mrb_value key;
   mrb_int integer;
   redisContext *rc = DATA_PTR(self);
@@ -580,7 +611,8 @@ static mrb_value mrb_redis_scard(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(integer);
 }
 
-static mrb_value mrb_redis_hset(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_hset(mrb_state *mrb, mrb_value self)
+{
   mrb_value key, field, val;
   redisContext *rc = DATA_PTR(self);
   mrb_int integer;
@@ -597,7 +629,8 @@ static mrb_value mrb_redis_hset(mrb_state *mrb, mrb_value self) {
   return integer ? mrb_true_value() : mrb_false_value();
 }
 
-static mrb_value mrb_redis_hget(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_hget(mrb_state *mrb, mrb_value self)
+{
   mrb_value key, field;
   redisContext *rc = DATA_PTR(self);
   const char *argv[3];
@@ -617,7 +650,8 @@ static mrb_value mrb_redis_hget(mrb_state *mrb, mrb_value self) {
   }
 }
 
-static mrb_value mrb_redis_hgetall(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_hgetall(mrb_state *mrb, mrb_value self)
+{
   mrb_value obj, hash = mrb_nil_value();
   redisContext *rc = DATA_PTR(self);
   const char *argv[2];
@@ -642,7 +676,8 @@ static mrb_value mrb_redis_hgetall(mrb_state *mrb, mrb_value self) {
   return hash;
 }
 
-static mrb_value mrb_redis_hdel(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_hdel(mrb_state *mrb, mrb_value self)
+{
   mrb_value key, val;
   mrb_int integer;
   redisContext *rc = DATA_PTR(self);
@@ -659,7 +694,8 @@ static mrb_value mrb_redis_hdel(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(integer);
 }
 
-static mrb_value mrb_redis_hkeys(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_hkeys(mrb_state *mrb, mrb_value self)
+{
   mrb_value key, array = mrb_nil_value();
   redisContext *rc = DATA_PTR(self);
   const char *argv[2];
@@ -683,7 +719,8 @@ static mrb_value mrb_redis_hkeys(mrb_state *mrb, mrb_value self) {
   return array;
 }
 
-static mrb_value mrb_redis_ttl(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_ttl(mrb_state *mrb, mrb_value self)
+{
   mrb_value key;
   redisContext *rc = DATA_PTR(self);
   mrb_int integer;
@@ -700,7 +737,8 @@ static mrb_value mrb_redis_ttl(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(integer);
 }
 
-static mrb_value mrb_redis_zadd(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_zadd(mrb_state *mrb, mrb_value self)
+{
   mrb_value key, member;
   mrb_float score;
   redisContext *rc = DATA_PTR(self);
@@ -718,7 +756,8 @@ static mrb_value mrb_redis_zadd(mrb_state *mrb, mrb_value self) {
   return self;
 }
 
-static mrb_value mrb_redis_zcard(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_zcard(mrb_state *mrb, mrb_value self)
+{
   mrb_value key;
   mrb_int integer;
   redisContext *rc = DATA_PTR(self);
@@ -732,7 +771,8 @@ static mrb_value mrb_redis_zcard(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(integer);
 }
 
-static mrb_value mrb_redis_basic_zrange(mrb_state *mrb, mrb_value self, const char *cmd) {
+static mrb_value mrb_redis_basic_zrange(mrb_state *mrb, mrb_value self, const char *cmd)
+{
   int i;
   mrb_value list, array;
   mrb_int arg1, arg2;
@@ -762,11 +802,18 @@ static mrb_value mrb_redis_basic_zrange(mrb_state *mrb, mrb_value self, const ch
   return array;
 }
 
-static mrb_value mrb_redis_zrange(mrb_state *mrb, mrb_value self) { return mrb_redis_basic_zrange(mrb, self, "ZRANGE"); }
+static mrb_value mrb_redis_zrange(mrb_state *mrb, mrb_value self)
+{
+  return mrb_redis_basic_zrange(mrb, self, "ZRANGE");
+}
 
-static mrb_value mrb_redis_zrevrange(mrb_state *mrb, mrb_value self) { return mrb_redis_basic_zrange(mrb, self, "ZREVRANGE"); }
+static mrb_value mrb_redis_zrevrange(mrb_state *mrb, mrb_value self)
+{
+  return mrb_redis_basic_zrange(mrb, self, "ZREVRANGE");
+}
 
-static mrb_value mrb_redis_basic_zrank(mrb_state *mrb, mrb_value self, const char *cmd) {
+static mrb_value mrb_redis_basic_zrank(mrb_state *mrb, mrb_value self, const char *cmd)
+{
   mrb_value key, member;
   mrb_int rank;
   redisContext *rc = DATA_PTR(self);
@@ -783,11 +830,18 @@ static mrb_value mrb_redis_basic_zrank(mrb_state *mrb, mrb_value self, const cha
   return mrb_fixnum_value(rank);
 }
 
-static mrb_value mrb_redis_zrank(mrb_state *mrb, mrb_value self) { return mrb_redis_basic_zrank(mrb, self, "ZRANK"); }
+static mrb_value mrb_redis_zrank(mrb_state *mrb, mrb_value self)
+{
+  return mrb_redis_basic_zrank(mrb, self, "ZRANK");
+}
 
-static mrb_value mrb_redis_zrevrank(mrb_state *mrb, mrb_value self) { return mrb_redis_basic_zrank(mrb, self, "ZREVRANK"); }
+static mrb_value mrb_redis_zrevrank(mrb_state *mrb, mrb_value self)
+{
+  return mrb_redis_basic_zrank(mrb, self, "ZREVRANK");
+}
 
-static mrb_value mrb_redis_zscore(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_zscore(mrb_state *mrb, mrb_value self)
+{
   mrb_value key, member, score;
   redisContext *rc = DATA_PTR(self);
   const char *argv[3];
@@ -803,7 +857,8 @@ static mrb_value mrb_redis_zscore(mrb_state *mrb, mrb_value self) {
   return score;
 }
 
-static mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self)
+{
   mrb_value channel, msg;
   redisContext *rc = DATA_PTR(self);
   const char *argv[3];
@@ -818,7 +873,8 @@ static mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self) {
   return self;
 }
 
-static mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self)
+{
   redisContext *rc = DATA_PTR(self);
 
   redisFree(rc);
@@ -831,36 +887,34 @@ static mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self) {
 
 static inline mrb_value mrb_redis_get_ary_reply(redisReply *reply, mrb_state *mrb);
 
-static inline mrb_value mrb_redis_get_reply(redisReply *reply, mrb_state *mrb) {
+static inline mrb_value mrb_redis_get_reply(redisReply *reply, mrb_state *mrb)
+{
   switch (reply->type) {
-    case REDIS_REPLY_STRING:
-      return mrb_str_new(mrb, reply->str, reply->len);
-      break;
-    case REDIS_REPLY_ARRAY:
-      return mrb_redis_get_ary_reply(reply, mrb);
-      break;
-    case REDIS_REPLY_INTEGER: {
-      if (FIXABLE(reply->integer))
-        return mrb_fixnum_value(reply->integer);
-      else
-        return mrb_float_value(mrb, reply->integer);
-    }
-      break;
-    case REDIS_REPLY_NIL:
-      return mrb_nil_value();
-      break;
-    case REDIS_REPLY_STATUS: {
-      mrb_sym status = mrb_intern(mrb, reply->str, reply->len);
-      return mrb_symbol_value(status);
-    }
-      break;
-    case REDIS_REPLY_ERROR: {
-      mrb_value err = mrb_str_new(mrb, reply->str, reply->len);
-      return mrb_exc_new_str(mrb, E_REDIS_REPLY_ERROR, err);
-    }
-      break;
-    default:
-      mrb_raise(mrb, E_REDIS_ERROR, "unknown reply type");
+  case REDIS_REPLY_STRING:
+    return mrb_str_new(mrb, reply->str, reply->len);
+    break;
+  case REDIS_REPLY_ARRAY:
+    return mrb_redis_get_ary_reply(reply, mrb);
+    break;
+  case REDIS_REPLY_INTEGER: {
+    if (FIXABLE(reply->integer))
+      return mrb_fixnum_value(reply->integer);
+    else
+      return mrb_float_value(mrb, reply->integer);
+  } break;
+  case REDIS_REPLY_NIL:
+    return mrb_nil_value();
+    break;
+  case REDIS_REPLY_STATUS: {
+    mrb_sym status = mrb_intern(mrb, reply->str, reply->len);
+    return mrb_symbol_value(status);
+  } break;
+  case REDIS_REPLY_ERROR: {
+    mrb_value err = mrb_str_new(mrb, reply->str, reply->len);
+    return mrb_exc_new_str(mrb, E_REDIS_REPLY_ERROR, err);
+  } break;
+  default:
+    mrb_raise(mrb, E_REDIS_ERROR, "unknown reply type");
   }
 }
 
@@ -876,7 +930,8 @@ static inline mrb_value mrb_redis_get_ary_reply(redisReply *reply, mrb_state *mr
   return ary;
 }
 
-static mrb_value mrb_redisAppendCommandArgv(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redisAppendCommandArgv(mrb_state *mrb, mrb_value self)
+{
   mrb_sym command;
   mrb_value *mrb_argv;
   mrb_int argc = 0;
@@ -906,7 +961,7 @@ static mrb_value mrb_redisAppendCommandArgv(mrb_state *mrb, mrb_value self) {
     }
   }
 
-  redisContext *context = (redisContext *) DATA_PTR(self);
+  redisContext *context = (redisContext *)DATA_PTR(self);
   errno = 0;
   int rc = redisAppendCommandArgv(context, argc, argv, argvlen);
   if (rc == REDIS_OK) {
@@ -918,7 +973,8 @@ static mrb_value mrb_redisAppendCommandArgv(mrb_state *mrb, mrb_value self) {
   return self;
 }
 
-static mrb_value mrb_redisGetReply(mrb_state *mrb, mrb_value self) {
+static mrb_value mrb_redisGetReply(mrb_state *mrb, mrb_value self)
+{
   mrb_sym queue_counter_sym = mrb_intern_lit(mrb, "queue_counter");
   mrb_value queue_counter_val = mrb_iv_get(mrb, self, queue_counter_sym);
   mrb_int queue_counter = -1;
@@ -926,13 +982,13 @@ static mrb_value mrb_redisGetReply(mrb_state *mrb, mrb_value self) {
     queue_counter = mrb_fixnum(queue_counter_val);
   }
 
-  redisContext *context = (redisContext *) DATA_PTR(self);
+  redisContext *context = (redisContext *)DATA_PTR(self);
   redisReply *reply = NULL;
   mrb_value reply_val = self;
   errno = 0;
-  int rc = redisGetReply(context, (void **) &reply);
+  int rc = redisGetReply(context, (void **)&reply);
   if (rc == REDIS_OK && reply != NULL) {
-    struct mrb_jmpbuf* prev_jmp = mrb->jmp;
+    struct mrb_jmpbuf *prev_jmp = mrb->jmp;
     struct mrb_jmpbuf c_jmp;
 
     MRB_TRY(&c_jmp)
@@ -962,8 +1018,7 @@ static mrb_value mrb_redisGetReply(mrb_state *mrb, mrb_value self) {
   return reply_val;
 }
 
-static mrb_value
-mrb_redisGetBulkReply(mrb_state *mrb, mrb_value self)
+static mrb_value mrb_redisGetBulkReply(mrb_state *mrb, mrb_value self)
 {
   mrb_value queue_counter_val = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "queue_counter"));
 
@@ -984,16 +1039,17 @@ mrb_redisGetBulkReply(mrb_state *mrb, mrb_value self)
   return bulk_reply;
 }
 
-void mrb_mruby_redis_gem_init(mrb_state *mrb) {
+void mrb_mruby_redis_gem_init(mrb_state *mrb)
+{
   struct RClass *redis, *redis_error;
 
   redis = mrb_define_class(mrb, "Redis", mrb->object_class);
   MRB_SET_INSTANCE_TT(redis, MRB_TT_DATA);
 
   redis_error = mrb_define_class_under(mrb, redis, "ConnectionError", E_RUNTIME_ERROR);
-  mrb_define_class_under(mrb, redis, "ReplyError",    redis_error);
+  mrb_define_class_under(mrb, redis, "ReplyError", redis_error);
   mrb_define_class_under(mrb, redis, "ProtocolError", redis_error);
-  mrb_define_class_under(mrb, redis, "OOMError",      redis_error);
+  mrb_define_class_under(mrb, redis, "OOMError", redis_error);
 
   mrb_define_method(mrb, redis, "initialize", mrb_redis_connect, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "select", mrb_redis_select, MRB_ARGS_REQ(1));
@@ -1038,12 +1094,14 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb) {
   mrb_define_method(mrb, redis, "zscore", mrb_redis_zscore, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, redis, "publish", mrb_redis_pub, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "close", mrb_redis_close, MRB_ARGS_NONE());
-  mrb_define_method(mrb, redis, "queue",      mrb_redisAppendCommandArgv, (MRB_ARGS_REQ(1)|MRB_ARGS_REST()));
-  mrb_define_method(mrb, redis, "reply",      mrb_redisGetReply,          MRB_ARGS_NONE());
-  mrb_define_method(mrb, redis, "bulk_reply", mrb_redisGetBulkReply,      MRB_ARGS_NONE());
+  mrb_define_method(mrb, redis, "queue", mrb_redisAppendCommandArgv, (MRB_ARGS_REQ(1) | MRB_ARGS_REST()));
+  mrb_define_method(mrb, redis, "reply", mrb_redisGetReply, MRB_ARGS_NONE());
+  mrb_define_method(mrb, redis, "bulk_reply", mrb_redisGetBulkReply, MRB_ARGS_NONE());
   DONE;
 }
 
-void mrb_mruby_redis_gem_final(mrb_state *mrb) {}
+void mrb_mruby_redis_gem_final(mrb_state *mrb)
+{
+}
 
 //#endif
