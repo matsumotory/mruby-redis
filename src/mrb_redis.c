@@ -611,6 +611,27 @@ static mrb_value mrb_redis_scard(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(integer);
 }
 
+static mrb_value mrb_redis_spop(mrb_state *mrb, mrb_value self)
+{
+  mrb_value key;
+  redisContext *rc = DATA_PTR(self);
+  const char *argv[2];
+  size_t lens[2];
+  redisReply *rr;
+
+  mrb_get_args(mrb, "o", &key);
+  CREATE_REDIS_COMMAND_ARG1(argv, lens, "SPOP", key);
+  rr = redisCommandArgv(rc, 2, argv, lens);
+  if (rr->type == REDIS_REPLY_STRING) {
+    mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
+    freeReplyObject(rr);
+    return str;
+  } else {
+    freeReplyObject(rr);
+    return mrb_nil_value();
+  }
+}
+
 static mrb_value mrb_redis_hset(mrb_state *mrb, mrb_value self)
 {
   mrb_value key, field, val;
@@ -1079,6 +1100,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_method(mrb, redis, "sismember", mrb_redis_sismember, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, redis, "smembers", mrb_redis_smembers, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "scard", mrb_redis_scard, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, redis, "spop", mrb_redis_spop, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "hset", mrb_redis_hset, MRB_ARGS_REQ(3));
   mrb_define_method(mrb, redis, "hget", mrb_redis_hget, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, redis, "hgetall", mrb_redis_hgetall, MRB_ARGS_REQ(1));
