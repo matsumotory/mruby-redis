@@ -1,10 +1,26 @@
-# mruby-redis   [![Build Status](https://travis-ci.org/matsumoto-r/mruby-redis.svg?branch=master)](https://travis-ci.org/matsumoto-r/mruby-redis)
-[Hiredis](https://github.com/redis/hiredis) binding by mruby. Hiredis is a minimalistic C client library for the Redis database. Redis is an open source, BSD licensed, advanced key-value store. It is often referred to as a data structure server since keys can contain strings, hashes, lists, sets and sorted sets. Plese see [redis official website](http://redis.io/).
+# mruby-redis [![Build Status](https://travis-ci.org/matsumoto-r/mruby-redis.svg?branch=master)](https://travis-ci.org/matsumoto-r/mruby-redis)
 
-__If Redis is over performance or over capacity for you, I recommend [mruby-vedis](https://github.com/matsumoto-r/mruby-vedis).__ vedis is an embeddable datastore C library built with over 70 commands similar in concept to Redis but without the networking layer since Vedis run in the same process of the host application.
-Please see [vedis pages](http://vedis.symisc.net/index.html).
-## install by mrbgems
- - add conf.gem line to `build_config.rb`
+[Hiredis](https://github.com/redis/hiredis) binding for mruby. Hiredis is a
+minimalistic C client library for the Redis database. Redis is an open source,
+BSD-licensed, advanced key-value store. It is often referred to as a data
+structure server since keys can contain strings, hashes, lists, sets and sorted
+sets. Plese visit [redis' official website](http://redis.io/) for more details
+about Redis.
+
+__Running Redis might be impossible for memory/CPU-constrained environments,__
+so we can recommend [mruby-vedis](https://github.com/matsumoto-r/mruby-vedis).
+`vedis` is an embeddable datastore distributed as a C library. It supports over
+70 commands similar to Redis, but runs in memory (hence doesn't require a
+networking layer).
+Please visit [vedis' website](http://vedis.symisc.net/index.html) for more
+details.
+
+## INSTALLATION
+
+#### Using mrbgems
+
+Add conf.gem line to `build_config.rb`:
+
 ```ruby
 MRuby::Build.new do |conf|
 
@@ -15,227 +31,278 @@ end
 ```
 
 
-## redis.rb
+## USAGE
 
-* code
-
+### Connecting to a Redis server
 
 ```ruby
-host     = "127.0.0.1"
-port     = 6379
-key      = "hoge"
-database = 0
-
-puts "> redis connect #{host}: #{port.to_s}"
-r = Redis.new host, port # the 3rd optional parameter is `timeout` (in seconds)
-
-puts "> redis select: #{database}"
-r.select database
-
-puts "> redis set #{key} 200"
-r.set key, "200"
-
-puts "> redis get #{key}"
-puts "#{key}: #{r[key]}"
-
-puts "> redis exists #{key}"
-puts "#{r.exists?(key)}"
-
-puts "> redis exists fuga"
-puts "#{r.exists?("fuga")}"
-
-puts "> redis set #{key} fuga"
-r[key] =  "fuga"
-
-puts "> redis get #{key}"
-puts "#{key}: #{r.get key}"
-
-puts "> redis randomkey"
-r.randomkey
-
-puts "> redis del #{key}"
-r.del key
-
-if r[key].nil?
-    puts "del success!"
-end
-
-puts "> redis incr #{key}"
-puts "#{key} incr: #{r.incr(key)}"
-puts "#{key} incr: #{r.incr(key)}"
-puts "#{key} incr: #{r.incr(key)}"
-puts "#{key} incr: #{r.incr(key)}"
-
-puts "> redis decr #{key}"
-puts "#{key} decr: #{r.decr(key)}"
-puts "#{key} decr: #{r.decr(key)}"
-puts "#{key} decr: #{r.decr(key)}"
-puts "#{key} decr: #{r.decr(key)}"
-
-puts "> redis decrby #{key} 100"
-puts r.incrby key, 100
-
-puts "> redis lpush logs error"
-r.lpush "logs", "error1"
-r.lpush "logs", "error2"
-r.lpush "logs", "error3"
-
-puts "> redis lrange 0 -1"
-puts r.lrange "logs", 0, -1
-
-puts "> redis ltrim 1 -1"
-r.ltrim "logs", 1, -1
-
-puts "> redis lrange 0 -1"
-puts r.lrange "logs", 0, -1
-
-puts "> redis del logs"
-r.del "logs"
-
-if r["logs"].nil?
-    puts "del success!"
-end
-
-puts "> redis hset myhash field1 a"
-r.hset "myhash", "field1", "a"
-
-puts "> redis hset myhash field2 b"
-r.hset "myhash", "field2", "b"
-
-puts "> redis hget myhash field1"
-puts r.hget "myhash", "field1"
-
-puts "> redis hget myhash field2"
-puts r.hget "myhash", "field2"
-
-puts "> redis hdel myhash field1"
-puts r.hdel "myhash", "field1"
-
-puts "> redis del myhash"
-
-if r["myhash"].nil?
-    puts "del success!"
-end
-
-puts "> redis zadd hs 80 a"
-r.zadd "hs", 80, "a"
-
-puts "> redis zadd hs 50.1 b"
-r.zadd "hs", 50.1, "b"
-
-puts "> redis zadd hs 60 c"
-r.zadd "hs", 60, "c"
-
-puts "> redis zscore hs a"
-puts r.zscore "hs", "a"
-
-puts "> redis zrange hs 0 -1"
-puts r.zrange "hs", 0, -1
-
-puts "> redis zrank hs b"
-puts r.zrank "hs", "b"
-
-puts "> redis zrank hs c"
-puts r.zrank "hs", "c"
-
-puts "> redis zrank hs a"
-puts r.zrank "hs", "a"
-
-puts ">redis zrevrange hs 0 -1"
-puts r.zrevrange "hs", 0, -1
-
-puts ">redis zrevrank hs a"
-puts r.zrevrank "hs", "a"
-
-puts ">redis zrevrank hs c"
-puts r.zrevrank "hs", "c"
-
-puts ">redis zrevrank hs b"
-puts r.zrevrank "hs", "b"
-
-puts "> redis del hs"
-r.del "hs"
-if r["hs"].nil?
-    puts "del success!"
-end
-
-puts "> redis publish :one hello"
-r.publish "one", "hello"
-
-r.close
+client = Redis.new "127.0.0.1", 6379, 2 # Connect to the server
+client.select 0                         # Select the database
 ```
 
-* execute
+### Commands
 
-```text
-> redis connect 127.0.0.1: 6379
-> redis select: 0
-> redis set hoge 200
-> redis get hoge
-hoge: 200
-> redis exists hoge
-true
-> redis exists fuga
-false
-> redis set hoge fuga
-> redis get hoge
-hoge: fuga
-> redis randomkey
-hoge
-> redis del hoge
-del success!
-> redis incr hoge
-hoge incr: 1
-hoge incr: 2
-hoge incr: 3
-hoge incr: 4
-> redis decr hoge
-hoge decr: 3
-hoge decr: 2
-hoge decr: 1
-hoge decr: 0
-> redis decrby hoge 100
-100
-> redis lpush logs error
-> redis lrange 0 -1
-["error3", "error2", "error1"]
-> redis ltrim 1 -1
-> redis lrange 0 -1
-["error2", "error1"]
-> redis del logs
-del success!
-> redis hset myhash field1 a
-> redis hset myhash field2 b
-> redis hget myhash field1
-a
-> redis hget myhash field2
-b
-> redis hdel myhash field1
-1
-> redis del myhash
-del success!
-> redis zadd hs 80 a
-> redis zadd hs 50.1 b
-> redis zadd hs 60 c
-> redis zscore hs a
-80
-> redis zrange hs 0 -1
-["b", "c", "a"]
-> redis zrank hs b
-0
-> redis zrank hs c
-1
-> redis zrank hs a
-2
->redis zrevrange hs 0 -1
-["a", "c", "b"]
->redis zrevrank hs a
-0
->redis zrevrank hs c
-1
->redis zrevrank hs b
-2
-> redis del hs
-del success!
-> redis publish :one hello
+#### `Redis#[]=`
+
+TBD
+
+
+#### `Redis#[]`
+
+```ruby
+client["key"]
 ```
+
+#### `Redis#bulk_reply`
+
+TBD
+
+
+#### `Redis#close`
+
+TBD
+
+
+#### `Redis#decr` [doc](http://redis.io/commands/decr)
+
+```ruby
+client.decr "key"
+```
+
+
+#### `Redis#decrby` [doc](http://redis.io/commands/decrby)
+
+TBD
+
+
+#### `Redis#del` [doc](http://redis.io/commands/del)
+
+```ruby
+client.del "key"
+```
+
+#### `Redis#exists?` [doc](http://redis.io/commands/exists?)
+
+```ruby
+client.exists?("key")
+```
+
+
+#### `Redis#expire` [doc](http://redis.io/commands/expire)
+
+TBD
+
+
+#### `Redis#flushdb` [doc](http://redis.io/commands/flushdb)
+
+TBD
+
+
+#### `Redis#get` [doc](http://redis.io/commands/get)
+
+```ruby
+client.get "key"
+```
+
+
+#### `Redis#hdel` [doc](http://redis.io/commands/hdel)
+
+```ruby
+client.hdel "myhash", "field1"
+```
+
+
+#### `Redis#hget` [doc](http://redis.io/commands/hget)
+
+```ruby
+client.hget "myhash", "field1"
+```
+
+
+#### `Redis#hgetall` [doc](http://redis.io/commands/hgetall)
+
+TBD
+
+
+#### `Redis#hkeys` [doc](http://redis.io/commands/hkeys)
+
+TBD
+
+
+#### `Redis#hset` [doc](http://redis.io/commands/hset)
+
+```ruby
+client.hset "myhash", "field1", "a"
+```
+
+
+#### `Redis#incr` [doc](http://redis.io/commands/incr)
+
+```ruby
+client.incr "key"
+```
+
+
+#### `Redis#incrby` [doc](http://redis.io/commands/incrby)
+
+TBD
+
+
+#### `Redis#keys` [doc](http://redis.io/commands/keys)
+
+TBD
+
+
+#### `Redis#lindex` [doc](http://redis.io/commands/lindex)
+
+TBD
+
+
+#### `Redis#llen` [doc](http://redis.io/commands/llen)
+
+TBD
+
+
+#### `Redis#lpop` [doc](http://redis.io/commands/lpop)
+
+TBD
+
+
+#### `Redis#lpush` [doc](http://redis.io/commands/lpush)
+
+TBD
+
+
+#### `Redis#lrange` [doc](http://redis.io/commands/lrange)
+
+```ruby
+client.lrange "logs", 0, -1
+```
+
+
+#### `Redis#ltrim` [doc](http://redis.io/commands/ltrim)
+
+```ruby
+client.ltrim "logs", 1, -1
+```
+
+
+#### `Redis#publish` [doc](http://redis.io/commands/publish)
+
+TBD
+
+
+#### `Redis#queue` [doc](http://redis.io/commands/queue)
+
+TBD
+
+
+#### `Redis#randomkey` [doc](http://redis.io/commands/randomkey)
+
+TBD
+
+
+#### `Redis#reply` [doc](http://redis.io/commands/reply)
+
+TBD
+
+
+#### `Redis#rpop` [doc](http://redis.io/commands/rpop)
+
+TBD
+
+
+#### `Redis#rpush` [doc](http://redis.io/commands/rpush)
+
+TBD
+
+
+#### `Redis#sadd` [doc](http://redis.io/commands/sadd)
+
+TBD
+
+
+#### `Redis#scard` [doc](http://redis.io/commands/scard)
+
+TBD
+
+
+#### `Redis#set` [doc](http://redis.io/commands/set)
+
+```ruby
+client.set key, "200"
+```
+
+
+#### `Redis#sismember` [doc](http://redis.io/commands/sismember)
+
+TBD
+
+
+#### `Redis#smembers` [doc](http://redis.io/commands/smembers)
+
+TBD
+
+
+#### `Redis#spop` [doc](http://redis.io/commands/spop)
+
+TBD
+
+
+#### `Redis#ttl` [doc](http://redis.io/commands/ttl)
+
+TBD
+
+
+#### `Redis#zadd` [doc](http://redis.io/commands/zadd)
+
+```ruby
+client.zadd "hs", 80, "a"
+```
+
+
+#### `Redis#zcard` [doc](http://redis.io/commands/zcard)
+
+TBD
+
+
+#### `Redis#zrange` [doc](http://redis.io/commands/zrange)
+
+```ruby
+client.zrange "hs", 0, -1
+```
+
+
+#### `Redis#zrank` [doc](http://redis.io/commands/zrank)
+
+```ruby
+client.zrank "hs", "a"
+```
+
+
+#### `Redis#zrevrange` [doc](http://redis.io/commands/zrevrange)
+
+```ruby
+client.zrevrange "hs", 0, -1
+```
+
+
+#### `Redis#zrevrank` [doc](http://redis.io/commands/zrevrank)
+
+```ruby
+client.zrevrank "hs", "a"
+```
+
+
+#### `Redis#zscore` [doc](http://redis.io/commands/zscore)
+
+```ruby
+client.zscore "hs", "a"
+```
+
+See [`example/redis.rb`](https://github.com/matsumoto-r/mruby-redis/blob/master/example/redis.rb) for more details.
+
+
+## LICENSE
+
+MIT License - Copyright (c) mod\_mruby developers 2012
