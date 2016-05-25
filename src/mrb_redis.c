@@ -31,6 +31,8 @@
 #include <string.h>
 #include <time.h>
 #include <hiredis/hiredis.h>
+#include <hiredis/async.h>
+#include <hiredis/adapters/libevent.h>
 #include "mruby.h"
 #include "mruby/data.h"
 #include "mruby/variable.h"
@@ -43,6 +45,14 @@
 #include <errno.h>
 #include <mruby/error.h>
 #include <mruby/throw.h>
+
+typedef struct {
+  mrb_state *mrb;
+  mrb_value self;
+  mrb_value blk;
+  redisAsyncContext *rac;
+  struct event_base *base;
+} mrb_redis_async_context;
 
 #define DONE mrb_gc_arena_restore(mrb, 0);
 
@@ -73,8 +83,18 @@ static void redisContext_free(mrb_state *mrb, void *p)
   redisFree(p);
 }
 
+static void redisAsyncContext_free(mrb_state *mrb, void *p)
+{
+  mrb_redis_async_context *ctx = (mrb_redis_async_context *)p;
+  redisAsyncDisconnect(ctx->rac);
+}
+
 static const struct mrb_data_type redisContext_type = {
     "redisContext", redisContext_free,
+};
+
+static const struct mrb_data_type redisAsyncContext_type = {
+    "redisAsyncContext", redisAsyncContext_free,
 };
 
 static inline void mrb_redis_check_error(redisContext *context, mrb_state *mrb)
@@ -123,6 +143,108 @@ static mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
   }
 
   DATA_PTR(self) = rc;
+
+  return self;
+}
+
+/* Redis::NonBlock class */
+static mrb_value mrb_redis_connect_async(mrb_state *mrb, mrb_value self)
+{
+  mrb_value host, port;
+  redisAsyncContext *rac;
+  mrb_redis_async_context *ctx = (mrb_redis_async_context *)DATA_PTR(self);
+  struct event_base *base = event_base_new();
+
+  if (ctx) {
+    mrb_free(mrb, ctx);
+  }
+  DATA_TYPE(self) = &redisAsyncContext_type;
+  DATA_PTR(self) = NULL;
+
+  mrb_get_args(mrb, "oo", &host, &port);
+
+  rac = redisAsyncConnect(mrb_str_to_cstr(mrb, host), mrb_fixnum(port));
+  if (rac->err) {
+    mrb_raise(mrb, E_REDIS_ERROR, "redis async connection failed.");
+  }
+
+  redisLibeventAttach(rac, base);
+
+  ctx = mrb_malloc(mrb, sizeof(mrb_redis_async_context));
+  ctx->rac = rac;
+  ctx->base = base;
+  DATA_PTR(self) = ctx;
+
+  return self;
+}
+
+static void set_async_cb(redisAsyncContext *c, void *r, void *data)
+{
+  redisReply *rs = r;
+  mrb_redis_async_context *ctx = (mrb_redis_async_context *)data;
+  mrb_state* mrb = ctx->mrb;
+
+  if (mrb == NULL) return;
+  if (rs == NULL) return;
+
+  event_base_loopbreak(ctx->base);
+}
+
+static mrb_value mrb_redis_set_async(mrb_state *mrb, mrb_value self)
+{
+  mrb_value key, val;
+  const char *argv[3];
+  size_t lens[3];
+  mrb_redis_async_context *ctx = (mrb_redis_async_context *)DATA_PTR(self);
+  redisAsyncContext *rac = ctx->rac;
+
+  mrb_get_args(mrb, "oo", &key, &val);
+
+  CREATE_REDIS_COMMAND_ARG2(argv, lens, "SET", key, val);
+
+  redisAsyncCommandArgv(rac, set_async_cb, ctx, 3, argv, lens);
+  event_base_loop(ctx->base, EVLOOP_NONBLOCK);
+
+  return self;
+}
+
+static void get_async_cb(redisAsyncContext *c, void *r, void *data)
+{
+  redisReply *rs = r;
+  mrb_redis_async_context *ctx = (mrb_redis_async_context *)data;
+  mrb_state* mrb = ctx->mrb;
+  mrb_value arg;
+
+  if (mrb == NULL) return;
+  if (rs == NULL) return;
+
+  if (rs->type == REDIS_REPLY_STRING) {
+    arg = mrb_str_new(mrb, rs->str, rs->len);
+  } else {
+    arg = mrb_nil_value();
+  }
+  mrb_yield_argv(mrb, ctx->blk, 1, &arg);
+  event_base_loopbreak(ctx->base);
+}
+
+static mrb_value mrb_redis_get_async(mrb_state *mrb, mrb_value self)
+{
+  mrb_value key, blk;
+  mrb_redis_async_context *ctx = (mrb_redis_async_context *)DATA_PTR(self);
+  redisAsyncContext *rac = ctx->rac;
+  const char *argv[2];
+  size_t lens[2];
+
+  mrb_get_args(mrb, "o&", &key, &blk);
+
+  CREATE_REDIS_COMMAND_ARG1(argv, lens, "GET", key);
+
+  ctx->mrb = mrb;
+  ctx->self = self;
+  ctx->blk = blk;
+
+  redisAsyncCommandArgv(rac, get_async_cb, ctx, 2, argv, lens);
+  event_base_dispatch(ctx->base);
 
   return self;
 }
@@ -1062,7 +1184,7 @@ static mrb_value mrb_redisGetBulkReply(mrb_state *mrb, mrb_value self)
 
 void mrb_mruby_redis_gem_init(mrb_state *mrb)
 {
-  struct RClass *redis, *redis_error;
+  struct RClass *redis, *redis_error, *redis_async;
 
   redis = mrb_define_class(mrb, "Redis", mrb->object_class);
   MRB_SET_INSTANCE_TT(redis, MRB_TT_DATA);
@@ -1071,6 +1193,11 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_class_under(mrb, redis, "ReplyError", redis_error);
   mrb_define_class_under(mrb, redis, "ProtocolError", redis_error);
   mrb_define_class_under(mrb, redis, "OOMError", redis_error);
+
+  redis_async = mrb_define_class_under(mrb, redis, "Async", mrb->object_class);
+  mrb_define_method(mrb, redis_async, "initialize", mrb_redis_connect_async, MRB_ARGS_ANY());
+  mrb_define_method(mrb, redis_async, "set", mrb_redis_set_async, MRB_ARGS_ANY());
+  mrb_define_method(mrb, redis_async, "get", mrb_redis_get_async, MRB_ARGS_ANY());
 
   mrb_define_method(mrb, redis, "initialize", mrb_redis_connect, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "select", mrb_redis_select, MRB_ARGS_REQ(1));
