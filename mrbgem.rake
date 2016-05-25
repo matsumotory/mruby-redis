@@ -22,6 +22,8 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
     Dir.chdir(build_dir) do
       e = {}
       run_command e, 'git clone git://github.com/redis/hiredis.git'
+      # Latest HIREDIS is not compatible for OS X
+      run_command e, "git --git-dir=#{hiredis_dir}/.git --work-tree=#{hiredis_dir} checkout v0.13.3" if `uname` =~ /Darwin/
     end
   end
 
