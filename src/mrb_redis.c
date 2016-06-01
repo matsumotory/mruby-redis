@@ -203,7 +203,7 @@ static mrb_value mrb_redis_set_async(mrb_state *mrb, mrb_value self)
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "SET", key, val);
 
   redisAsyncCommandArgv(rac, set_async_cb, ctx, 3, argv, lens);
-  event_base_dispatch(ctx->base);
+  event_base_loop(ctx->base, EVLOOP_NONBLOCK);
 
   return self;
 }
@@ -244,7 +244,7 @@ static mrb_value mrb_redis_get_async(mrb_state *mrb, mrb_value self)
   ctx->blk = blk;
 
   redisAsyncCommandArgv(rac, get_async_cb, ctx, 2, argv, lens);
-  event_base_dispatch(ctx->base);
+  event_base_loop(ctx->base, EVLOOP_NONBLOCK);
 
   return self;
 }
