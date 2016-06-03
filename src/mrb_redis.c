@@ -943,7 +943,8 @@ static inline mrb_value mrb_redis_get_ary_reply(redisReply *reply, mrb_state *mr
 {
   mrb_value ary = mrb_ary_new_capa(mrb, reply->elements);
   int ai = mrb_gc_arena_save(mrb);
-  for (size_t element_couter = 0; element_couter < reply->elements; element_couter++) {
+  size_t element_couter;
+  for (element_couter = 0; element_couter < reply->elements; element_couter++) {
     mrb_value element = mrb_redis_get_reply(reply->element[element_couter], mrb);
     mrb_ary_push(mrb, ary, element);
     mrb_gc_arena_restore(mrb, ai);
@@ -966,7 +967,8 @@ static mrb_value mrb_redisAppendCommandArgv(mrb_state *mrb, mrb_value self)
   argv[0] = mrb_sym2name_len(mrb, command, &command_len);
   argvlen[0] = command_len;
 
-  for (mrb_int argc_current = 1; argc_current < argc; argc_current++) {
+  mrb_int argc_current;
+  for (argc_current = 1; argc_current < argc; argc_current++) {
     mrb_value curr = mrb_str_to_str(mrb, mrb_argv[argc_current - 1]);
     argv[argc_current] = RSTRING_PTR(curr);
     argvlen[argc_current] = RSTRING_LEN(curr);
