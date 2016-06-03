@@ -967,6 +967,7 @@ static mrb_value mrb_redisAppendCommandArgv(mrb_state *mrb, mrb_value self)
   argv[0] = mrb_sym2name_len(mrb, command, &command_len);
   argvlen[0] = command_len;
 
+  int argc_current;
   for (mrb_int argc_current = 1; argc_current < argc; argc_current++) {
     mrb_value curr = mrb_str_to_str(mrb, mrb_argv[argc_current - 1]);
     argv[argc_current] = RSTRING_PTR(curr);
