@@ -943,6 +943,7 @@ static inline mrb_value mrb_redis_get_ary_reply(redisReply *reply, mrb_state *mr
 {
   mrb_value ary = mrb_ary_new_capa(mrb, reply->elements);
   int ai = mrb_gc_arena_save(mrb);
+  int element_couter;
   for (size_t element_couter = 0; element_couter < reply->elements; element_couter++) {
     mrb_value element = mrb_redis_get_reply(reply->element[element_couter], mrb);
     mrb_ary_push(mrb, ary, element);
