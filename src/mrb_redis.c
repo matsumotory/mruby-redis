@@ -740,6 +740,31 @@ static mrb_value mrb_redis_hkeys(mrb_state *mrb, mrb_value self)
   return array;
 }
 
+static mrb_value mrb_redis_hvals(mrb_state *mrb, mrb_value self)
+{
+  mrb_value key, array = mrb_nil_value();
+  redisContext *rc = DATA_PTR(self);
+  const char *argv[2];
+  size_t lens[2];
+  redisReply *rr;
+
+  mrb_get_args(mrb, "o", &key);
+  CREATE_REDIS_COMMAND_ARG1(argv, lens, "HVALS", key);
+  rr = redisCommandArgv(rc, 2, argv, lens);
+  if (rr->type == REDIS_REPLY_ARRAY) {
+    if (rr->elements > 0) {
+      int i;
+
+      array = mrb_ary_new(mrb);
+      for (i = 0; i < rr->elements; i++) {
+        mrb_ary_push(mrb, array, mrb_str_new(mrb, rr->element[i]->str, rr->element[i]->len));
+      }
+    }
+  }
+  freeReplyObject(rr);
+  return array;
+}
+
 static mrb_value mrb_redis_ttl(mrb_state *mrb, mrb_value self)
 {
   mrb_value key;
@@ -1108,6 +1133,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_method(mrb, redis, "hgetall", mrb_redis_hgetall, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "hdel", mrb_redis_hdel, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, redis, "hkeys", mrb_redis_hkeys, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, redis, "hvals", mrb_redis_hvals, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "ttl", mrb_redis_ttl, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, redis, "zadd", mrb_redis_zadd, MRB_ARGS_REQ(3));
   mrb_define_method(mrb, redis, "zcard", mrb_redis_zcard, MRB_ARGS_REQ(1));

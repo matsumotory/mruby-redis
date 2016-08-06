@@ -128,6 +128,12 @@ TBD
 
 TBD
 
+#### `Redis#hvals` [doc](http://redis.io/commands/hvals)
+
+```ruby
+client.hvals "myhash"
+```
+
 
 #### `Redis#hset` [doc](http://redis.io/commands/hset)
 

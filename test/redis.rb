@@ -230,6 +230,25 @@ assert("Redis#hkeys") do
   assert_equal ["field1", "field2", "field3\0", "field4"], keys2
 end
 
+assert("Redis#hvals") do
+  r = Redis.new HOST, PORT
+  r.del "myhash"
+
+  vals =  r.hvals "myhash"
+
+  r.hset "myhash", "field1", "a"
+  r.hset "myhash", "field2", "b"
+  r.hset "myhash", "field3\0", "c"
+  r.hset "myhash", "field4", "d\0"
+
+  vals2 =  r.hvals "myhash"
+
+  r.close
+
+  assert_nil vals
+  assert_equal ["a", "b", "c", "d\0"], vals2
+end
+
 assert("Redis#incrby") do
   r = Redis.new HOST, PORT
   r.del "score"
