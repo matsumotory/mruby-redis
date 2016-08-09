@@ -230,6 +230,32 @@ assert("Redis#hkeys") do
   assert_equal ["field1", "field2", "field3\0", "field4"], keys2
 end
 
+assert("Redis#hmset, Redis#hmget") do
+  r = Redis.new HOST, PORT
+  r.del "myhash"
+  r.del "myhash\0"
+
+  r.hmset "myhash", "field1", "a", "field2", "b"
+  r.hmset "myhash", "field2", "c"
+  ret_get_f12_ab = r.hmget "myhash", "field1", "field2"
+
+  r.hmset "myhash\0", "field3\0", "c\0", "field4\0", "d\0"
+  ret_get_f34_cd = r.hmget "myhash\0", "field3\0", "field4\0"
+
+  ret_get_f12n_abn = r.hmget "myhash", "field1", "field2", "nofield"
+
+  assert_raise(ArgumentError) {r.hmget "myhash"}
+  assert_raise(ArgumentError) {r.hmset "myhash"}
+  assert_raise(ArgumentError) {r.hmset "myhash", "field1"}
+  assert_raise(ArgumentError) {r.hmset "myhash", "field1", "a", "field2"}
+
+  r.close
+
+  assert_equal ["a", "c"], ret_get_f12_ab
+  assert_equal ["c\0", "d\0"], ret_get_f34_cd
+  assert_equal ["a", "c", nil], ret_get_f12n_abn
+end
+
 assert("Redis#hvals") do
   r = Redis.new HOST, PORT
   r.del "myhash"
