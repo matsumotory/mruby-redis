@@ -128,6 +128,20 @@ TBD
 
 TBD
 
+#### `Redis#hmset` [doc](http://redis.io/commands/hmset)
+
+```ruby
+client.hmset "myhash", "field1", "a", "field2", "b"
+```
+
+
+#### `Redis#hmget` [doc](http://redis.io/commands/hmget)
+
+```ruby
+client.hmget "myhash", "field1", "field2"
+```
+
+
 #### `Redis#hvals` [doc](http://redis.io/commands/hvals)
 
 ```ruby
