@@ -564,6 +564,17 @@ assert("Redis#randomkey") do
   assert_equal "foo", r.randomkey
 end
 
+assert("Redis#ltrim") do
+  r = Redis.new HOST, PORT
+  r.rpush "mylist", "one"
+  r.rpush "mylist", "two"
+  r.rpush "mylist", "three"
+
+  r.ltrim "mylist", 1, -1
+
+  results = r.lrange "mylist", 0, -1
+  assert_equal ["two", "three"], results
+end
+
 # TODO: Add test
-# - ltrim
 # - publish
