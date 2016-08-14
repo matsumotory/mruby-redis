@@ -229,6 +229,12 @@ number_of_subscribed_clients = client.publish "queue", "some value"
 number_of_internal_registers_altered = client.pfadd "hyperloglog_structure", "some value"
 ```
 
+#### `Redis#pfcount` [doc](http://redis.io/commands/pfcount)
+
+```ruby
+approximated_number_of_unique_elements = client.pfcount "hyperloglog_structure"
+```
+
 
 #### `Redis#queue` [doc](http://redis.io/commands/queue)
 

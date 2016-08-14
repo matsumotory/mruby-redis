@@ -605,3 +605,11 @@ assert("Redis#pfadd") do
   assert_equal 1, r.pfadd("foos", "baz")
   assert_equal 0, r.pfadd("foos", "baz")
 end
+
+assert("Redis#pfcount") do
+  r = Redis.new HOST, PORT
+  r.pfadd("foos", "bar")
+  r.pfadd("foos", "baz")
+
+  assert_equal 2, r.pfcount("foos")
+end

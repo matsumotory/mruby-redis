@@ -1033,6 +1033,26 @@ static mrb_value mrb_redis_pfadd(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(integer);
 }
 
+static mrb_value mrb_redis_pfcount(mrb_state *mrb, mrb_value self)
+{
+  mrb_value key;
+  mrb_int integer;
+  const char *argv[3];
+  size_t lens[3];
+  redisReply *rr;
+
+  redisContext *rc = DATA_PTR(self);
+
+  mrb_get_args(mrb, "o", &key);
+  CREATE_REDIS_COMMAND_ARG1(argv, lens, "PFCOUNT", key);
+
+  rr = redisCommandArgv(rc, 2, argv, lens);
+  integer = rr->integer;
+  freeReplyObject(rr);
+
+  return mrb_fixnum_value(integer);
+}
+
 static mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self)
 {
   redisContext *rc = DATA_PTR(self);
@@ -1260,6 +1280,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_method(mrb, redis, "zrevrank", mrb_redis_zrevrank, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, redis, "zscore", mrb_redis_zscore, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, redis, "pfadd", mrb_redis_pfadd, MRB_ARGS_ANY());
+  mrb_define_method(mrb, redis, "pfcount", mrb_redis_pfcount, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "publish", mrb_redis_pub, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "close", mrb_redis_close, MRB_ARGS_NONE());
   mrb_define_method(mrb, redis, "queue", mrb_redisAppendCommandArgv, (MRB_ARGS_REQ(1) | MRB_ARGS_REST()));
