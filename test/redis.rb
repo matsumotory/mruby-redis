@@ -598,3 +598,10 @@ assert("Redis#publish") do
 
   assert_equal 0, producer.publish("some_queue", "hello world")
 end
+
+assert("Redis#pfadd") do
+  r = Redis.new HOST, PORT
+  assert_equal 1, r.pfadd("foos", "bar")
+  assert_equal 1, r.pfadd("foos", "baz")
+  assert_equal 0, r.pfadd("foos", "baz")
+end

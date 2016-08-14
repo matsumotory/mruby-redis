@@ -218,7 +218,16 @@ client.ltrim "logs", 1, -1
 
 #### `Redis#publish` [doc](http://redis.io/commands/publish)
 
-TBD
+```ruby
+number_of_subscribed_clients = client.publish "queue", "some value"
+```
+
+
+#### `Redis#pfadd` [doc](http://redis.io/commands/pfadd)
+
+```ruby
+number_of_internal_registers_altered = client.pfadd "hyperloglog_structure", "some value"
+```
 
 
 #### `Redis#queue` [doc](http://redis.io/commands/queue)
