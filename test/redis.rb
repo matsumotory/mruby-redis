@@ -576,5 +576,8 @@ assert("Redis#ltrim") do
   assert_equal ["two", "three"], results
 end
 
-# TODO: Add test
-# - publish
+assert("Redis#publish") do
+  producer = Redis.new HOST, PORT
+
+  assert_equal 0, producer.publish("some_queue", "hello world")
+end

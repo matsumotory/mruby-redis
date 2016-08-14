@@ -982,7 +982,7 @@ static mrb_value mrb_redis_zscore(mrb_state *mrb, mrb_value self)
 
 static mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self)
 {
-  mrb_value channel, msg;
+  mrb_value channel, msg, res;
   redisContext *rc = DATA_PTR(self);
   const char *argv[3];
   size_t lens[3];
@@ -991,9 +991,15 @@ static mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "oo", &channel, &msg);
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "PUBLISH", channel, msg);
   rr = redisCommandArgv(rc, 3, argv, lens);
-  freeReplyObject(rr);
 
-  return self;
+  if (rr->type == REDIS_REPLY_INTEGER) {
+    res = mrb_fixnum_value(rr->integer);
+  } else {
+    res = mrb_nil_value();
+  }
+
+  freeReplyObject(rr);
+  return res;
 }
 
 static mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self)
