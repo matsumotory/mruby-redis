@@ -556,7 +556,14 @@ end
 #  assert_equal "60", ret_c
 #end
 
+assert("Redis#randomkey") do
+  r = Redis.new HOST, PORT
+  r.flushdb
+  r.set "foo", "bar"
+
+  assert_equal "foo", r.randomkey
+end
+
 # TODO: Add test
-# - randomkey
 # - ltrim
 # - publish
