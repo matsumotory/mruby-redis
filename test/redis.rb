@@ -556,7 +556,28 @@ end
 #  assert_equal "60", ret_c
 #end
 
-# TODO: Add test
-# - randomkey
-# - ltrim
-# - publish
+assert("Redis#randomkey") do
+  r = Redis.new HOST, PORT
+  r.flushdb
+  r.set "foo", "bar"
+
+  assert_equal "foo", r.randomkey
+end
+
+assert("Redis#ltrim") do
+  r = Redis.new HOST, PORT
+  r.rpush "mylist", "one"
+  r.rpush "mylist", "two"
+  r.rpush "mylist", "three"
+
+  r.ltrim "mylist", 1, -1
+
+  results = r.lrange "mylist", 0, -1
+  assert_equal ["two", "three"], results
+end
+
+assert("Redis#publish") do
+  producer = Redis.new HOST, PORT
+
+  assert_equal 0, producer.publish("some_queue", "hello world")
+end
