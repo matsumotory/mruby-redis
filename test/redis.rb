@@ -613,3 +613,16 @@ assert("Redis#pfcount") do
 
   assert_equal 2, r.pfcount("foos")
 end
+
+assert("Redis#pfcount") do
+  r = Redis.new HOST, PORT
+  r.flushall
+  %w|a b c|.each { |val| r.pfadd "foos", val }
+  %w|c d e|.each { |val| r.pfadd "bars", val }
+
+  assert_equal 3, r.pfcount("foos")
+  assert_equal 3, r.pfcount("bars")
+  r.pfmerge "bags", "foos", "bars"
+
+  assert_equal 5, r.pfcount("bags")
+end
