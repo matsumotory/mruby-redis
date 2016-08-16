@@ -93,9 +93,18 @@ client.exists?("key")
 TBD
 
 
+#### `Redis#flushall` [doc](http://redis.io/commands/flushall)
+
+```ruby
+client.flushall
+```
+
+
 #### `Redis#flushdb` [doc](http://redis.io/commands/flushdb)
 
-TBD
+```ruby
+client.flushdb
+```
 
 
 #### `Redis#get` [doc](http://redis.io/commands/get)

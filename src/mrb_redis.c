@@ -261,6 +261,17 @@ static mrb_value mrb_redis_flushdb(mrb_state *mrb, mrb_value self)
   return str;
 }
 
+static mrb_value mrb_redis_flushall(mrb_state *mrb, mrb_value self)
+{
+  redisContext *rc = DATA_PTR(self);
+  mrb_value str;
+  redisReply *rs = redisCommand(rc, "FLUSHALL");
+
+  str = mrb_str_new(mrb, rs->str, rs->len);
+  freeReplyObject(rs);
+  return str;
+}
+
 static mrb_value mrb_redis_randomkey(mrb_state *mrb, mrb_value self)
 {
   redisContext *rc = DATA_PTR(self);
@@ -1188,6 +1199,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_method(mrb, redis, "get", mrb_redis_get, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "exists?", mrb_redis_exists, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "expire", mrb_redis_expire, MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, redis, "flushall", mrb_redis_flushall, MRB_ARGS_NONE());
   mrb_define_method(mrb, redis, "flushdb", mrb_redis_flushdb, MRB_ARGS_NONE());
   mrb_define_method(mrb, redis, "randomkey", mrb_redis_randomkey, MRB_ARGS_NONE());
   mrb_define_method(mrb, redis, "[]=", mrb_redis_set, MRB_ARGS_ANY());
