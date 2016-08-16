@@ -90,6 +90,23 @@ assert("Redis#expire") do
   assert_nil ret2
 end
 
+assert("Redis#flushall") do
+  r = Redis.new HOST, PORT
+  r.set "key1", "a"
+  r.set "key2", "b"
+  ret1 = r.exists? "key1"
+  ret2 = r.exists? "key2"
+  r.flushall
+  ret_after1 = r.exists? "key1"
+  ret_after2 = r.exists? "key2"
+  r.close
+
+  assert_true ret1
+  assert_true ret2
+  assert_false ret_after1
+  assert_false ret_after2
+end
+
 assert("Redis#flushdb") do
   r = Redis.new HOST, PORT
   r.set "key1", "a"
@@ -580,4 +597,32 @@ assert("Redis#publish") do
   producer = Redis.new HOST, PORT
 
   assert_equal 0, producer.publish("some_queue", "hello world")
+end
+
+assert("Redis#pfadd") do
+  r = Redis.new HOST, PORT
+  assert_equal 1, r.pfadd("foos", "bar")
+  assert_equal 1, r.pfadd("foos", "baz")
+  assert_equal 0, r.pfadd("foos", "baz")
+end
+
+assert("Redis#pfcount") do
+  r = Redis.new HOST, PORT
+  r.pfadd("foos", "bar")
+  r.pfadd("foos", "baz")
+
+  assert_equal 2, r.pfcount("foos")
+end
+
+assert("Redis#pfcount") do
+  r = Redis.new HOST, PORT
+  r.flushall
+  %w|a b c|.each { |val| r.pfadd "foos", val }
+  %w|c d e|.each { |val| r.pfadd "bars", val }
+
+  assert_equal 3, r.pfcount("foos")
+  assert_equal 3, r.pfcount("bars")
+  r.pfmerge "bags", "foos", "bars"
+
+  assert_equal 5, r.pfcount("bags")
 end

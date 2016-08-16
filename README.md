@@ -93,9 +93,18 @@ client.exists?("key")
 TBD
 
 
+#### `Redis#flushall` [doc](http://redis.io/commands/flushall)
+
+```ruby
+client.flushall
+```
+
+
 #### `Redis#flushdb` [doc](http://redis.io/commands/flushdb)
 
-TBD
+```ruby
+client.flushdb
+```
 
 
 #### `Redis#get` [doc](http://redis.io/commands/get)
@@ -209,7 +218,28 @@ client.ltrim "logs", 1, -1
 
 #### `Redis#publish` [doc](http://redis.io/commands/publish)
 
-TBD
+```ruby
+number_of_subscribed_clients = client.publish "queue", "some value"
+```
+
+
+#### `Redis#pfadd` [doc](http://redis.io/commands/pfadd)
+
+```ruby
+number_of_internal_registers_altered = client.pfadd "hyperloglog_structure", "some value"
+```
+
+#### `Redis#pfcount` [doc](http://redis.io/commands/pfcount)
+
+```ruby
+approximated_number_of_unique_elements = client.pfcount "hyperloglog_structure"
+```
+
+#### `Redis#pfmerge` [doc](http://redis.io/commands/pfmerge)
+
+```ruby
+client.pfmerge "hll3", "hll1", "hll2"
+```
 
 
 #### `Redis#queue` [doc](http://redis.io/commands/queue)
