@@ -624,25 +624,29 @@ assert("Redis#pfadd") do
   assert_equal 1, r.pfadd("foos", "bar")
   assert_equal 1, r.pfadd("foos", "baz")
   assert_equal 0, r.pfadd("foos", "baz")
+  assert_equal 1, r.pfadd("foos", "foobar", "foobaz")
+  assert_equal 0, r.pfadd("foos", "foobar", "foobaz")
 end
 
 assert("Redis#pfcount") do
   r = Redis.new HOST, PORT
   r.pfadd("foos", "bar")
   r.pfadd("foos", "baz")
+  r.pfadd("bars", "foobar")
 
   assert_equal 2, r.pfcount("foos")
+  assert_equal 3, r.pfcount("foos", "bars")
 end
 
 assert("Redis#pfmerge") do
   r = Redis.new HOST, PORT
   r.flushall
-  %w|a b c|.each { |val| r.pfadd "foos", val }
-  %w|c d e|.each { |val| r.pfadd "bars", val }
+  r.pfadd("foos", "a", "b", "c")
+  r.pfadd("bars", "c", "d", "e")
+  r.pfmerge "bazs", "foos"
+  r.pfmerge "foobars", "foos", "bars"
 
   assert_equal 3, r.pfcount("foos")
-  assert_equal 3, r.pfcount("bars")
-  r.pfmerge "bags", "foos", "bars"
-
+  assert_equal 3, r.pfcount("bazs")
   assert_equal 5, r.pfcount("bags")
 end
