@@ -1037,8 +1037,8 @@ static mrb_value mrb_redis_pfcount(mrb_state *mrb, mrb_value self)
 {
   mrb_value key;
   mrb_int integer;
-  const char *argv[3];
-  size_t lens[3];
+  const char *argv[2];
+  size_t lens[2];
   redisReply *rr;
 
   redisContext *rc = DATA_PTR(self);
@@ -1056,8 +1056,8 @@ static mrb_value mrb_redis_pfcount(mrb_state *mrb, mrb_value self)
 static mrb_value mrb_redis_pfmerge(mrb_state *mrb, mrb_value self)
 {
   mrb_value dest_struct, src_struct1, src_struct2;
-  const char *argv[3];
-  size_t lens[3];
+  const char *argv[4];
+  size_t lens[4];
   redisReply *rr;
 
   redisContext *rc = DATA_PTR(self);
