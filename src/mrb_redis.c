@@ -765,7 +765,8 @@ static mrb_value mrb_redis_hmget(mrb_state *mrb, mrb_value self)
   argvlen[0] = sizeof("HMGET") - 1;
 
   int ai = mrb_gc_arena_save(mrb);
-  for (mrb_int argc_current = 1; argc_current < argc; argc_current++) {
+  mrb_int argc_current;
+  for (argc_current = 1; argc_current < argc; argc_current++) {
     mrb_value curr = mrb_str_to_str(mrb, mrb_argv[argc_current - 1]);
     argv[argc_current] = RSTRING_PTR(curr);
     argvlen[argc_current] = RSTRING_LEN(curr);
@@ -779,7 +780,9 @@ static mrb_value mrb_redis_hmget(mrb_state *mrb, mrb_value self)
   if (rr->type == REDIS_REPLY_ARRAY) {
     if (rr->elements > 0) {
       array = mrb_ary_new(mrb);
-      for (int i = 0; i < rr->elements; i++) {
+
+      int i;
+      for (i = 0; i < rr->elements; i++) {
         if (rr->element[i]->len > 0) {
           mrb_ary_push(mrb, array, mrb_str_new(mrb, rr->element[i]->str, rr->element[i]->len));
         } else {
@@ -809,7 +812,8 @@ static mrb_value mrb_redis_hmset(mrb_state *mrb, mrb_value self)
   argvlen[0] = sizeof("HMSET") - 1;
 
   int ai = mrb_gc_arena_save(mrb);
-  for (mrb_int argc_current = 1; argc_current < argc; argc_current++) {
+  mrb_int argc_current;
+  for (argc_current = 1; argc_current < argc; argc_current++) {
     mrb_value curr = mrb_str_to_str(mrb, mrb_argv[argc_current - 1]);
     argv[argc_current] = RSTRING_PTR(curr);
     argvlen[argc_current] = RSTRING_LEN(curr);
