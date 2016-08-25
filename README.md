@@ -121,6 +121,13 @@ client.hdel "myhash", "field1"
 ```
 
 
+#### `Redis#hexists?` [doc](http://redis.io/commands/hexists)
+
+```ruby
+client.hexists? "myhash", "field1"
+```
+
+
 #### `Redis#hget` [doc](http://redis.io/commands/hget)
 
 ```ruby
