@@ -228,6 +228,26 @@ assert("Redis#hdel") do
   assert_true ret_exists2
 end
 
+assert("Redis#hexists?") do
+  r = Redis.new HOST, PORT
+  r.del "myhash"
+  r.del "myhash\0"
+
+  r.hset "myhash", "field", "a"
+  r.hset "myhash\0", "field\0", "b\0"
+  ret_hexists = r.hexists?("myhash", "field")
+  ret_hexists2 = r.hexists?("myhash", "invalid_field")
+  ret_hexists3 = r.hexists?("myhash\0", "field\0")
+  ret_hexists4 = r.hexists?("myhash\0", "invalid_field")
+
+  r.close
+
+  assert_true ret_hexists
+  assert_false ret_hexists2
+  assert_true ret_hexists3
+  assert_false ret_hexists4
+end
+
 assert("Redis#hkeys") do
   r = Redis.new HOST, PORT
   r.del "myhash"

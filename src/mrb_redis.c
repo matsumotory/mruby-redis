@@ -726,6 +726,26 @@ static mrb_value mrb_redis_hdel(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(integer);
 }
 
+static mrb_value mrb_redis_hexists(mrb_state *mrb, mrb_value self)
+{
+  mrb_value key, field;
+  mrb_int counter;
+  const char *argv[3];
+  size_t lens[3];
+  redisContext *rc = DATA_PTR(self);
+  redisReply *rr;
+
+  mrb_get_args(mrb, "oo", &key, &field);
+
+  CREATE_REDIS_COMMAND_ARG2(argv, lens, "HEXISTS", key, field);
+
+  rr = redisCommandArgv(rc, 3, argv, lens);
+  counter = rr->integer;
+  freeReplyObject(rr);
+
+  return counter ? mrb_true_value() : mrb_false_value();
+}
+
 static mrb_value mrb_redis_hkeys(mrb_state *mrb, mrb_value self)
 {
   mrb_value key, array = mrb_nil_value();
@@ -1289,6 +1309,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_method(mrb, redis, "hget", mrb_redis_hget, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, redis, "hgetall", mrb_redis_hgetall, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "hdel", mrb_redis_hdel, MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, redis, "hexists?", mrb_redis_hexists, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, redis, "hkeys", mrb_redis_hkeys, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "hmset", mrb_redis_hmset, (MRB_ARGS_REQ(3) | MRB_ARGS_REST()));
   mrb_define_method(mrb, redis, "hmget", mrb_redis_hmget, (MRB_ARGS_REQ(2) | MRB_ARGS_REST()));
