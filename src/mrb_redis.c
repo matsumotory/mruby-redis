@@ -1107,20 +1107,38 @@ static mrb_value mrb_redis_pfcount(mrb_state *mrb, mrb_value self)
 
 static mrb_value mrb_redis_pfmerge(mrb_state *mrb, mrb_value self)
 {
-  mrb_value dest_struct, src_struct1, src_struct2;
-  const char *argv[4];
-  size_t lens[4];
-  redisReply *rr;
+  mrb_value dest_struct, src_struct, *mrb_rest_argv;
+  mrb_int argc = 0;
+
+  mrb_get_args(mrb, "oo*", &dest_struct, &src_struct, &mrb_rest_argv, &argc);
+  argc += 3;
+
+  const char *argv[argc];
+  size_t argvlen[argc];
+  CREATE_REDIS_COMMAND_ARG2(argv, argvlen, "PFMERGE", dest_struct, src_struct);
+
+  if (argc > 3) {
+    int ai = mrb_gc_arena_save(mrb);
+    mrb_int argc_current;
+    for (argc_current = 3; argc_current < argc; argc_current++) {
+      mrb_value curr = mrb_str_to_str(mrb, mrb_rest_argv[argc_current - 3]);
+      argv[argc_current] = RSTRING_PTR(curr);
+      argvlen[argc_current] = RSTRING_LEN(curr);
+      mrb_gc_arena_restore(mrb, ai);
+    }
+  }
 
   redisContext *rc = DATA_PTR(self);
-
-  mrb_get_args(mrb, "ooo", &dest_struct, &src_struct1, &src_struct2);
-  CREATE_REDIS_COMMAND_ARG3(argv, lens, "PFMERGE", dest_struct, src_struct1, src_struct2);
-
-  rr = redisCommandArgv(rc, 4, argv, lens);
-  freeReplyObject(rr);
-
-  return self;
+  redisReply *rr;
+  rr = redisCommandArgv(rc, argc, argv, argvlen);
+  if (rr->type == REDIS_REPLY_STRING) {
+    mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
+    freeReplyObject(rr);
+    return str;
+  } else {
+    freeReplyObject(rr);
+    return mrb_nil_value();
+  }
 }
 
 static mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self)
@@ -1352,7 +1370,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_method(mrb, redis, "zscore", mrb_redis_zscore, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, redis, "pfadd", mrb_redis_pfadd, (MRB_ARGS_REQ(1) | MRB_ARGS_REST()));
   mrb_define_method(mrb, redis, "pfcount", mrb_redis_pfcount, (MRB_ARGS_REQ(1) | MRB_ARGS_REST()));
-  mrb_define_method(mrb, redis, "pfmerge", mrb_redis_pfmerge, MRB_ARGS_REQ(3));
+  mrb_define_method(mrb, redis, "pfmerge", mrb_redis_pfmerge, (MRB_ARGS_REQ(2) | MRB_ARGS_REST()));
   mrb_define_method(mrb, redis, "publish", mrb_redis_pub, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "close", mrb_redis_close, MRB_ARGS_NONE());
   mrb_define_method(mrb, redis, "queue", mrb_redisAppendCommandArgv, (MRB_ARGS_REQ(1) | MRB_ARGS_REST()));

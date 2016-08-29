@@ -647,12 +647,18 @@ end
 assert("Redis#pfmerge") do
   r = Redis.new HOST, PORT
   r.flushall
-  r.pfadd("foos", "a", "b", "c")
-  r.pfadd("bars", "c", "d", "e")
-  r.pfmerge "bazs", "foos"
-  r.pfmerge "foobars", "foos", "bars"
+  r.pfadd("foo", "a", "b", "c")
+  r.pfadd("bar", "c", "d", "e")
+  r.pfadd("baz", "e", "f", "g")
+
+  assert_raise(ArgumentError) {r.pfmerge }
+  assert_raise(ArgumentError) {r.pfmerge "foobar" }
+
+  r.pfmerge "foos", "foo"
+  r.pfmerge "foobar", "foo", "bar"
+  r.pfmerge "foobarbaz", "foo", "bar", "baz", "foobar"
 
   assert_equal 3, r.pfcount("foos")
-  assert_equal 3, r.pfcount("bazs")
-  assert_equal 5, r.pfcount("bags")
+  assert_equal 5, r.pfcount("foobar")
+  assert_equal 7, r.pfcount("foobarbaz")
 end
