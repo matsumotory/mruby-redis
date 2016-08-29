@@ -633,12 +633,15 @@ end
 
 assert("Redis#pfcount") do
   r = Redis.new HOST, PORT
+  r.flushall
   r.pfadd("foos", "bar")
   r.pfadd("foos", "baz")
   r.pfadd("bars", "foobar")
 
   assert_equal 2, r.pfcount("foos")
   assert_equal 3, r.pfcount("foos", "bars")
+  assert_equal 3, r.pfcount("foos", "bars", "barz")
+  assert_raise(ArgumentError) {r.pfcount }
 end
 
 assert("Redis#pfmerge") do
