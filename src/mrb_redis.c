@@ -1040,13 +1040,13 @@ static mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self)
 static mrb_value mrb_redis_pfadd(mrb_state *mrb, mrb_value self)
 {
   mrb_value key, *mrb_rest_argv;
-  mrb_int argc = 0;
+  mrb_int argc = 0, rest_argc = 0;
   redisContext *rc = DATA_PTR(self);
   redisReply *rr;
   mrb_int integer;
 
-  mrb_get_args(mrb, "o*", &key, &mrb_rest_argv, &argc);
-  argc += 2;
+  mrb_get_args(mrb, "o*", &key, &mrb_rest_argv, &rest_argc);
+  argc = rest_argc + 2;
 
   const char *argv[argc];
   size_t argvlen[argc];
@@ -1073,13 +1073,13 @@ static mrb_value mrb_redis_pfadd(mrb_state *mrb, mrb_value self)
 static mrb_value mrb_redis_pfcount(mrb_state *mrb, mrb_value self)
 {
   mrb_value key, *mrb_rest_argv;
-  mrb_int argc = 0;
+  mrb_int argc = 0, rest_argc = 0;
   redisContext *rc = DATA_PTR(self);
   redisReply *rr;
   mrb_int integer;
 
-  mrb_get_args(mrb, "o*", &key, &mrb_rest_argv, &argc);
-  argc += 2;
+  mrb_get_args(mrb, "o*", &key, &mrb_rest_argv, &rest_argc);
+  argc = rest_argc + 2;
 
   const char *argv[argc];
   size_t argvlen[argc];
@@ -1106,12 +1106,12 @@ static mrb_value mrb_redis_pfcount(mrb_state *mrb, mrb_value self)
 static mrb_value mrb_redis_pfmerge(mrb_state *mrb, mrb_value self)
 {
   mrb_value dest_struct, src_struct, *mrb_rest_argv;
-  mrb_int argc = 0;
+  mrb_int argc = 0, rest_argc = 0;
   redisContext *rc = DATA_PTR(self);
   redisReply *rr;
 
-  mrb_get_args(mrb, "oo*", &dest_struct, &src_struct, &mrb_rest_argv, &argc);
-  argc += 3;
+  mrb_get_args(mrb, "oo*", &dest_struct, &src_struct, &mrb_rest_argv, &rest_argc);
+  argc = rest_argc + 3;
 
   const char *argv[argc];
   size_t argvlen[argc];
