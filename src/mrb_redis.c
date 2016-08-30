@@ -1041,6 +1041,9 @@ static mrb_value mrb_redis_pfadd(mrb_state *mrb, mrb_value self)
 {
   mrb_value key, *mrb_rest_argv;
   mrb_int argc = 0;
+  redisContext *rc = DATA_PTR(self);
+  redisReply *rr;
+  mrb_int integer;
 
   mrb_get_args(mrb, "o*", &key, &mrb_rest_argv, &argc);
   argc += 2;
@@ -1060,11 +1063,7 @@ static mrb_value mrb_redis_pfadd(mrb_state *mrb, mrb_value self)
     }
   }
 
-  redisContext *rc = DATA_PTR(self);
-  redisReply *rr;
   rr = redisCommandArgv(rc, argc, argv, argvlen);
-
-  mrb_int integer;
   integer = rr->integer;
   freeReplyObject(rr);
 
@@ -1075,6 +1074,9 @@ static mrb_value mrb_redis_pfcount(mrb_state *mrb, mrb_value self)
 {
   mrb_value key, *mrb_rest_argv;
   mrb_int argc = 0;
+  redisContext *rc = DATA_PTR(self);
+  redisReply *rr;
+  mrb_int integer;
 
   mrb_get_args(mrb, "o*", &key, &mrb_rest_argv, &argc);
   argc += 2;
@@ -1094,11 +1096,7 @@ static mrb_value mrb_redis_pfcount(mrb_state *mrb, mrb_value self)
     }
   }
 
-  redisContext *rc = DATA_PTR(self);
-  redisReply *rr;
   rr = redisCommandArgv(rc, argc, argv, argvlen);
-
-  mrb_int integer;
   integer = rr->integer;
   freeReplyObject(rr);
 
@@ -1109,6 +1107,8 @@ static mrb_value mrb_redis_pfmerge(mrb_state *mrb, mrb_value self)
 {
   mrb_value dest_struct, src_struct, *mrb_rest_argv;
   mrb_int argc = 0;
+  redisContext *rc = DATA_PTR(self);
+  redisReply *rr;
 
   mrb_get_args(mrb, "oo*", &dest_struct, &src_struct, &mrb_rest_argv, &argc);
   argc += 3;
@@ -1128,8 +1128,6 @@ static mrb_value mrb_redis_pfmerge(mrb_state *mrb, mrb_value self)
     }
   }
 
-  redisContext *rc = DATA_PTR(self);
-  redisReply *rr;
   rr = redisCommandArgv(rc, argc, argv, argvlen);
   if (rr->type == REDIS_REPLY_STRING) {
     mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
