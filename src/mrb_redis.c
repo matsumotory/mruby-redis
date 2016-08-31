@@ -775,6 +775,7 @@ static mrb_value mrb_redis_hmget(mrb_state *mrb, mrb_value self)
 {
   mrb_value *mrb_argv;
   mrb_int argc = 0;
+  int i;
 
   mrb_get_args(mrb, "*", &mrb_argv, &argc);
   argc++;
@@ -801,7 +802,6 @@ static mrb_value mrb_redis_hmget(mrb_state *mrb, mrb_value self)
     if (rr->elements > 0) {
       array = mrb_ary_new(mrb);
 
-      int i;
       for (i = 0; i < rr->elements; i++) {
         if (rr->element[i]->len > 0) {
           mrb_ary_push(mrb, array, mrb_str_new(mrb, rr->element[i]->str, rr->element[i]->len));
@@ -822,6 +822,8 @@ static mrb_value mrb_redis_hmset(mrb_state *mrb, mrb_value self)
 {
   mrb_value *mrb_argv;
   mrb_int argc = 0;
+  redisContext *rc = DATA_PTR(self);
+  redisReply *rr;
 
   mrb_get_args(mrb, "*", &mrb_argv, &argc);
   argc++;
@@ -840,8 +842,6 @@ static mrb_value mrb_redis_hmset(mrb_state *mrb, mrb_value self)
     mrb_gc_arena_restore(mrb, ai);
   }
 
-  redisContext *rc = DATA_PTR(self);
-  redisReply *rr;
   rr = redisCommandArgv(rc, argc, argv, argvlen);
   if (rr->type == REDIS_REPLY_STATUS && rr != NULL) {
     freeReplyObject(rr);
