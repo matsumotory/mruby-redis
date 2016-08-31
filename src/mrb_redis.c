@@ -1039,18 +1039,31 @@ static mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self)
 
 static mrb_value mrb_redis_pfadd(mrb_state *mrb, mrb_value self)
 {
-  mrb_value key, val;
-  mrb_int integer;
-  const char *argv[3];
-  size_t lens[3];
-  redisReply *rr;
-
+  mrb_value key, *mrb_rest_argv;
+  mrb_int argc = 0, rest_argc = 0;
   redisContext *rc = DATA_PTR(self);
+  redisReply *rr;
+  mrb_int integer;
 
-  mrb_get_args(mrb, "oo", &key, &val);
-  CREATE_REDIS_COMMAND_ARG2(argv, lens, "PFADD", key, val);
+  mrb_get_args(mrb, "o*", &key, &mrb_rest_argv, &rest_argc);
+  argc = rest_argc + 2;
 
-  rr = redisCommandArgv(rc, 3, argv, lens);
+  const char *argv[argc];
+  size_t argvlen[argc];
+  CREATE_REDIS_COMMAND_ARG1(argv, argvlen, "PFADD", key);
+
+  if (argc > 2) {
+    int ai = mrb_gc_arena_save(mrb);
+    mrb_int argc_current;
+    for (argc_current = 2; argc_current < argc; argc_current++) {
+      mrb_value curr = mrb_str_to_str(mrb, mrb_rest_argv[argc_current - 2]);
+      argv[argc_current] = RSTRING_PTR(curr);
+      argvlen[argc_current] = RSTRING_LEN(curr);
+      mrb_gc_arena_restore(mrb, ai);
+    }
+  }
+
+  rr = redisCommandArgv(rc, argc, argv, argvlen);
   integer = rr->integer;
   freeReplyObject(rr);
 
@@ -1059,18 +1072,31 @@ static mrb_value mrb_redis_pfadd(mrb_state *mrb, mrb_value self)
 
 static mrb_value mrb_redis_pfcount(mrb_state *mrb, mrb_value self)
 {
-  mrb_value key;
-  mrb_int integer;
-  const char *argv[2];
-  size_t lens[2];
-  redisReply *rr;
-
+  mrb_value key, *mrb_rest_argv;
+  mrb_int argc = 0, rest_argc = 0;
   redisContext *rc = DATA_PTR(self);
+  redisReply *rr;
+  mrb_int integer;
 
-  mrb_get_args(mrb, "o", &key);
-  CREATE_REDIS_COMMAND_ARG1(argv, lens, "PFCOUNT", key);
+  mrb_get_args(mrb, "o*", &key, &mrb_rest_argv, &rest_argc);
+  argc = rest_argc + 2;
 
-  rr = redisCommandArgv(rc, 2, argv, lens);
+  const char *argv[argc];
+  size_t argvlen[argc];
+  CREATE_REDIS_COMMAND_ARG1(argv, argvlen, "PFCOUNT", key);
+
+  if (argc > 2) {
+    int ai = mrb_gc_arena_save(mrb);
+    mrb_int argc_current;
+    for (argc_current = 2; argc_current < argc; argc_current++) {
+      mrb_value curr = mrb_str_to_str(mrb, mrb_rest_argv[argc_current - 2]);
+      argv[argc_current] = RSTRING_PTR(curr);
+      argvlen[argc_current] = RSTRING_LEN(curr);
+      mrb_gc_arena_restore(mrb, ai);
+    }
+  }
+
+  rr = redisCommandArgv(rc, argc, argv, argvlen);
   integer = rr->integer;
   freeReplyObject(rr);
 
@@ -1079,20 +1105,38 @@ static mrb_value mrb_redis_pfcount(mrb_state *mrb, mrb_value self)
 
 static mrb_value mrb_redis_pfmerge(mrb_state *mrb, mrb_value self)
 {
-  mrb_value dest_struct, src_struct1, src_struct2;
-  const char *argv[4];
-  size_t lens[4];
+  mrb_value dest_struct, src_struct, *mrb_rest_argv;
+  mrb_int argc = 0, rest_argc = 0;
+  redisContext *rc = DATA_PTR(self);
   redisReply *rr;
 
-  redisContext *rc = DATA_PTR(self);
+  mrb_get_args(mrb, "oo*", &dest_struct, &src_struct, &mrb_rest_argv, &rest_argc);
+  argc = rest_argc + 3;
 
-  mrb_get_args(mrb, "ooo", &dest_struct, &src_struct1, &src_struct2);
-  CREATE_REDIS_COMMAND_ARG3(argv, lens, "PFMERGE", dest_struct, src_struct1, src_struct2);
+  const char *argv[argc];
+  size_t argvlen[argc];
+  CREATE_REDIS_COMMAND_ARG2(argv, argvlen, "PFMERGE", dest_struct, src_struct);
 
-  rr = redisCommandArgv(rc, 4, argv, lens);
-  freeReplyObject(rr);
+  if (argc > 3) {
+    int ai = mrb_gc_arena_save(mrb);
+    mrb_int argc_current;
+    for (argc_current = 3; argc_current < argc; argc_current++) {
+      mrb_value curr = mrb_str_to_str(mrb, mrb_rest_argv[argc_current - 3]);
+      argv[argc_current] = RSTRING_PTR(curr);
+      argvlen[argc_current] = RSTRING_LEN(curr);
+      mrb_gc_arena_restore(mrb, ai);
+    }
+  }
 
-  return self;
+  rr = redisCommandArgv(rc, argc, argv, argvlen);
+  if (rr->type == REDIS_REPLY_STRING) {
+    mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
+    freeReplyObject(rr);
+    return str;
+  } else {
+    freeReplyObject(rr);
+    return mrb_nil_value();
+  }
 }
 
 static mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self)
@@ -1322,9 +1366,9 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_method(mrb, redis, "zrank", mrb_redis_zrank, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, redis, "zrevrank", mrb_redis_zrevrank, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, redis, "zscore", mrb_redis_zscore, MRB_ARGS_REQ(2));
-  mrb_define_method(mrb, redis, "pfadd", mrb_redis_pfadd, MRB_ARGS_ANY());
-  mrb_define_method(mrb, redis, "pfcount", mrb_redis_pfcount, MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, redis, "pfmerge", mrb_redis_pfmerge, MRB_ARGS_REQ(3));
+  mrb_define_method(mrb, redis, "pfadd", mrb_redis_pfadd, (MRB_ARGS_REQ(1) | MRB_ARGS_REST()));
+  mrb_define_method(mrb, redis, "pfcount", mrb_redis_pfcount, (MRB_ARGS_REQ(1) | MRB_ARGS_REST()));
+  mrb_define_method(mrb, redis, "pfmerge", mrb_redis_pfmerge, (MRB_ARGS_REQ(2) | MRB_ARGS_REST()));
   mrb_define_method(mrb, redis, "publish", mrb_redis_pub, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "close", mrb_redis_close, MRB_ARGS_NONE());
   mrb_define_method(mrb, redis, "queue", mrb_redisAppendCommandArgv, (MRB_ARGS_REQ(1) | MRB_ARGS_REST()));

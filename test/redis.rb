@@ -621,28 +621,44 @@ end
 
 assert("Redis#pfadd") do
   r = Redis.new HOST, PORT
+  assert_equal 1, r.pfadd("foos")
+  assert_equal 0, r.pfadd("foos")
   assert_equal 1, r.pfadd("foos", "bar")
   assert_equal 1, r.pfadd("foos", "baz")
   assert_equal 0, r.pfadd("foos", "baz")
+  assert_equal 1, r.pfadd("foos", "foobar", "foobaz")
+  assert_equal 0, r.pfadd("foos", "foobar", "foobaz")
+  assert_raise(ArgumentError) {r.pfadd }
 end
 
 assert("Redis#pfcount") do
   r = Redis.new HOST, PORT
+  r.flushall
   r.pfadd("foos", "bar")
   r.pfadd("foos", "baz")
+  r.pfadd("bars", "foobar")
 
   assert_equal 2, r.pfcount("foos")
+  assert_equal 3, r.pfcount("foos", "bars")
+  assert_equal 3, r.pfcount("foos", "bars", "barz")
+  assert_raise(ArgumentError) {r.pfcount }
 end
 
 assert("Redis#pfmerge") do
   r = Redis.new HOST, PORT
   r.flushall
-  %w|a b c|.each { |val| r.pfadd "foos", val }
-  %w|c d e|.each { |val| r.pfadd "bars", val }
+  r.pfadd("foo", "a", "b", "c")
+  r.pfadd("bar", "c", "d", "e")
+  r.pfadd("baz", "e", "f", "g")
+
+  assert_raise(ArgumentError) {r.pfmerge }
+  assert_raise(ArgumentError) {r.pfmerge "foobar" }
+
+  r.pfmerge "foos", "foo"
+  r.pfmerge "foobar", "foo", "bar"
+  r.pfmerge "foobarbaz", "foo", "bar", "baz", "foobar"
 
   assert_equal 3, r.pfcount("foos")
-  assert_equal 3, r.pfcount("bars")
-  r.pfmerge "bags", "foos", "bars"
-
-  assert_equal 5, r.pfcount("bags")
+  assert_equal 5, r.pfcount("foobar")
+  assert_equal 7, r.pfcount("foobarbaz")
 end
