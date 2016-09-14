@@ -7,6 +7,8 @@
 #ifndef MRB_REDIS_H
 #define MRB_REDIS_H
 
+#include "mruby.h"
+
 void mrb_mruby_redis_gem_init(mrb_state *mrb);
 
 #endif
