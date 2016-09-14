@@ -25,24 +25,24 @@
 ** [ MIT license: http://www.opensource.org/licenses/mit-license.php ]
 */
 
+#include "mrb_redis.h"
+#include "mruby.h"
+#include "mruby/array.h"
+#include "mruby/class.h"
+#include "mruby/data.h"
+#include "mruby/hash.h"
+#include "mruby/numeric.h"
+#include "mruby/string.h"
+#include "mruby/variable.h"
+#include <errno.h>
+#include <hiredis/hiredis.h>
+#include <mruby/error.h>
 #include <mruby/redis.h>
+#include <mruby/throw.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <hiredis/hiredis.h>
-#include "mruby.h"
-#include "mruby/data.h"
-#include "mruby/variable.h"
-#include "mruby/numeric.h"
-#include "mruby/array.h"
-#include "mruby/hash.h"
-#include "mruby/string.h"
-#include "mruby/class.h"
-#include "mrb_redis.h"
-#include <errno.h>
-#include <mruby/error.h>
-#include <mruby/throw.h>
 
 #define DONE mrb_gc_arena_restore(mrb, 0);
 
@@ -158,53 +158,44 @@ static mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "oo|H?", &key, &val, &opt, &b);
 
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "SET", key, val);
-  if(b)
-  {
-      v = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "EX"));
-      if(!mrb_nil_p(v))
-      {
-          argv[c] = "EX";
-          lens[c] = strlen("EX");
-          c++;
-          argv[c] =  RSTRING_PTR(v);
-          lens[c] = RSTRING_LEN(v);
-          c++;
+  if (b) {
+    v = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "EX"));
+    if (!mrb_nil_p(v)) {
+      argv[c] = "EX";
+      lens[c] = strlen("EX");
+      c++;
+      argv[c] = RSTRING_PTR(v);
+      lens[c] = RSTRING_LEN(v);
+      c++;
+    }
 
-      }
+    v = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "PX"));
+    if (!mrb_nil_p(v)) {
+      argv[c] = "PX";
+      lens[c] = strlen("PX");
+      c++;
+      argv[c] = RSTRING_PTR(v);
+      lens[c] = RSTRING_LEN(v);
+      c++;
+    }
 
-      v = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "PX"));
-      if(!mrb_nil_p(v))
-      {
-          argv[c] = "PX";
-          lens[c] = strlen("PX");
-          c++;
-          argv[c] =  RSTRING_PTR(v);
-          lens[c] = RSTRING_LEN(v);
-          c++;
-      }
+    v = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "NX"));
+    w = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "XX"));
+    if (!mrb_nil_p(v) && !mrb_nil_p(w)) {
+      mrb_raise(mrb, E_ARGUMENT_ERROR, "Either NX or XX is true");
+    }
+    if (!mrb_nil_p(v)) {
+      argv[c] = "NX";
+      lens[c] = strlen("NX");
+      c++;
+    }
 
-      v = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "NX"));
-      w = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "XX"));
-      if(!mrb_nil_p(v) && !mrb_nil_p(w)) 
-      {
-          mrb_raise(mrb, E_ARGUMENT_ERROR,"Either NX or XX is true" );
-      }
-          if(!mrb_nil_p(v))
-          {
-              argv[c] = "NX";
-              lens[c] = strlen("NX");
-              c++;
-          }
-
-          if(!mrb_nil_p(w))
-          {
-              argv[c] = "XX";
-              lens[c] = strlen("XX");
-              c++;
-          }
+    if (!mrb_nil_p(w)) {
+      argv[c] = "XX";
+      lens[c] = strlen("XX");
+      c++;
+    }
   }
-
-
 
   rs = redisCommandArgv(rc, c, argv, lens);
   freeReplyObject(rs);
@@ -1370,7 +1361,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
 
   mrb_define_method(mrb, redis, "initialize", mrb_redis_connect, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "select", mrb_redis_select, MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, redis, "set", mrb_redis_set, MRB_ARGS_ARG(2,1));
+  mrb_define_method(mrb, redis, "set", mrb_redis_set, MRB_ARGS_ARG(2, 1));
   mrb_define_method(mrb, redis, "get", mrb_redis_get, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "exists?", mrb_redis_exists, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "expire", mrb_redis_expire, MRB_ARGS_REQ(2));
