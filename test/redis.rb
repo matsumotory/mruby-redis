@@ -34,6 +34,23 @@ assert("Redis#set, Redis#get") do
   assert_equal "fuga", ret
 end
 
+assert("Redis#set, Redis#get") do
+  r = Redis.new HOST, PORT
+  r.set( "hoge", "fuga", {EX: "10", PX: "1"})
+  ret = r.get "hoge"
+  r.close
+
+  assert_equal "fuga", ret
+end
+
+assert("Redis#set, Redis#get") do
+  r = Redis.new HOST, PORT
+  r.set( "hoge", "fuga", {EX: "10", PX: "1"})
+  ret = r.get "hoge"
+  r.close
+
+  assert_equal "fuga", ret
+end
 assert("Redis#[]=, Redis#[]") do
   r = Redis.new HOST, PORT
   r["hoge"] = "fuga"
