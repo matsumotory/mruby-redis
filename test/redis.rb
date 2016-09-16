@@ -515,6 +515,30 @@ assert("Redis#sismember Redis#scard Redis#smembers Redis#spop") do
 
 end
 
+assert("Redis#srem") do
+  r = Redis.new HOST, PORT
+
+  r.sadd 'set', 'hoge'
+
+  assert_equal 1, r.scard('set')
+
+  assert_equal 1, r.srem("set", "hoge")
+  assert_equal 0, r.srem("set", "fuga") 
+
+  assert_equal 0, r.scard('set')
+
+  r.sadd 'set', 'a', 'b', 'c'
+
+  assert_equal 3, r.scard('set')
+
+  assert_equal 2, r.srem('set', 'a', 'b')
+  assert_equal 1, r.srem('set', 'c', 'd', 'e')
+  assert_equal 0, r.srem('set', 'x', 'y', 'z')
+
+  assert_equal 0, r.scard('set')
+
+end
+
 assert("Redis#ttl") do
   r = Redis.new HOST, PORT
   r.del "hoge"
