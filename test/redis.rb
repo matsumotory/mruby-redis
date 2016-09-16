@@ -433,15 +433,33 @@ assert("Redis#lpop") do
   assert_equal ["two", "three"], range2
 end
 
-assert("Redis#sadd Redis#sismember Redis#scard Redis#smembers Redis#spop") do
+assert("Redis#sadd") do
   r = Redis.new HOST, PORT
-
-  assert_equal 0, r.scard('set')
+  assert_equal 1, r.sadd('set', 'test')
+  r.spop 'set'
 
   r.sadd 'set', 'bar'
 
   assert_equal 1, r.sismember('set', 'bar')
   assert_equal 0, r.sismember('set', 'buzz')
+  
+  r.spop 'set'
+
+  r.sadd 'set', 'bar', 'buzz'
+
+  assert_equal 1, r.sismember('set', 'bar')
+  assert_equal 1, r.sismember('set', 'buzz')
+
+  r.spop 'set'
+  r.spop 'set'
+end
+
+assert("Redis#sismember Redis#scard Redis#smembers Redis#spop") do
+  r = Redis.new HOST, PORT
+
+  assert_equal 0, r.scard('set')
+
+  r.sadd 'set', 'bar'
 
   assert_equal 1, r.scard('set')
 
