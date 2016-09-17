@@ -598,26 +598,23 @@ static mrb_value mrb_redis_sadd(mrb_state *mrb, mrb_value self)
   redisContext *rc = DATA_PTR(self);
 
   mrb_get_args(mrb, "o*", &key, &members, &members_len);
-  if(members_len == 0)
-  {
-      mrb_raise(mrb, E_ARGUMENT_ERROR, "too few arguments");
+  if (members_len == 0) {
+    mrb_raise(mrb, E_ARGUMENT_ERROR, "too few arguments");
   }
   argc = 2 + members_len;
 
   argv = (const char **)mrb_calloc(mrb, argc, sizeof(char *));
   lens = (size_t *)mrb_calloc(mrb, argc, sizeof(size_t));
 
-  if(members_len == 1)
-  {
+  if (members_len == 1) {
 
     CREATE_REDIS_COMMAND_ARG2(argv, lens, "SADD", key, *members);
-  }else{
+  } else {
 
     CREATE_REDIS_COMMAND_ARG1(argv, lens, "SADD", key);
-    for(i = 0; i < members_len; i++)
-    {
-        argv[i + 2] = RSTRING_PTR(members[i]);
-        lens[i + 2] = RSTRING_LEN(members[i]);
+    for (i = 0; i < members_len; i++) {
+      argv[i + 2] = RSTRING_PTR(members[i]);
+      lens[i + 2] = RSTRING_LEN(members[i]);
     }
   }
 
