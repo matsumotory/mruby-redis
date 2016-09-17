@@ -598,6 +598,10 @@ static mrb_value mrb_redis_sadd(mrb_state *mrb, mrb_value self)
   redisContext *rc = DATA_PTR(self);
 
   mrb_get_args(mrb, "o*", &key, &members, &members_len);
+  if(members_len == 0)
+  {
+      mrb_raise(mrb, E_ARGUMENT_ERROR, "too few arguments");
+  }
   argc = 2 + members_len;
 
   argv = (const char **)mrb_calloc(mrb, argc, sizeof(char *));
