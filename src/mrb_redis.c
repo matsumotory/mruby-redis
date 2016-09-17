@@ -587,34 +587,37 @@ static mrb_value mrb_redis_lindex(mrb_state *mrb, mrb_value self)
 
 static mrb_value mrb_redis_sadd(mrb_state *mrb, mrb_value self)
 {
-  mrb_value key, *val;
-  mrb_int integer, argc;
+  mrb_value key, *members;
+  mrb_int integer, members_len;
   const char **argv;
-  size_t *lens,
-         c = 2;
+  size_t *lens;
+  size_t argc;
   int i;
   redisReply *rr;
 
   redisContext *rc = DATA_PTR(self);
 
-  mrb_get_args(mrb, "o*", &key, &val, &argc);
-  argv = (char **)mrb_calloc(mrb, c + argc, sizeof(char *));
-  lens = (size_t *)mrb_calloc(mrb, c + argc, sizeof(size_t));
-  if(argc == 1)
+  mrb_get_args(mrb, "o*", &key, &members, &members_len);
+  argc = 2 + members_len;
+
+  argv = (const char **)mrb_calloc(mrb, argc, sizeof(char *));
+  lens = (size_t *)mrb_calloc(mrb, argc, sizeof(size_t));
+
+  if(members_len == 1)
   {
 
-    CREATE_REDIS_COMMAND_ARG2(argv, lens, "SADD", key, *val);
+    CREATE_REDIS_COMMAND_ARG2(argv, lens, "SADD", key, *members);
   }else{
 
     CREATE_REDIS_COMMAND_ARG1(argv, lens, "SADD", key);
-    for(i = 0; i < argc; i++)
+    for(i = 0; i < members_len; i++)
     {
-        argv[c + i] = RSTRING_PTR(val[i]);
-        lens[c + i] = RSTRING_LEN(val[i]);
+        argv[i + 2] = RSTRING_PTR(members[i]);
+        lens[i + 2] = RSTRING_LEN(members[i]);
     }
   }
 
-  rr = redisCommandArgv(rc, c + argc, argv, lens);
+  rr = redisCommandArgv(rc, argc, argv, lens);
   integer = rr->integer;
   freeReplyObject(rr);
 
