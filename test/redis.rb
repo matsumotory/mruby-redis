@@ -438,20 +438,25 @@ assert("Redis#sadd") do
   assert_equal 1, r.sadd('set', 'test')
   r.spop 'set'
 
-  r.sadd 'set', 'bar'
+  assert_equal 1, r.sadd('set', 'bar')
+  assert_equal 1, r.scard('set')
 
   assert_equal 1, r.sismember('set', 'bar')
   assert_equal 0, r.sismember('set', 'buzz')
   
-  r.spop 'set'
+  assert_equal 'bar', r.spop('set')
 
-  r.sadd 'set', 'bar', 'buzz'
+  assert_equal 2, r.sadd('set', 'bar', 'buzz')
+  assert_equal 2, r.scard('set')
 
   assert_equal 1, r.sismember('set', 'bar')
   assert_equal 1, r.sismember('set', 'buzz')
+  assert_equal 0, r.sismember('set', 'foo')
 
-  r.spop 'set'
-  r.spop 'set'
+  assert_equal ['bar', 'buzz'], r.smembers('set')
+
+  r.flushall
+
 end
 
 assert("Redis#sismember Redis#scard Redis#smembers Redis#spop") do
