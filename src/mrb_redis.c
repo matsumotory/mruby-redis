@@ -917,6 +917,25 @@ static mrb_value mrb_redis_hvals(mrb_state *mrb, mrb_value self)
   return array;
 }
 
+static mrb_value mrb_redis_hincrby(mrb_state *mrb, mrb_value self)
+{
+  mrb_value key, field, val_str;
+  mrb_int val, counter;
+  redisContext *rc = DATA_PTR(self);
+  const char *argv[4];
+  size_t lens[4];
+  redisReply *rr;
+
+  mrb_get_args(mrb, "ooi", &key, &field, &val);
+  val_str = mrb_fixnum_to_str(mrb, mrb_fixnum_value(val), 10);
+  CREATE_REDIS_COMMAND_ARG3(argv, lens, "HINCRBY", key, field, val_str);
+  rr = redisCommandArgv(rc, 4, argv, lens);
+  counter = rr->integer;
+  freeReplyObject(rr);
+
+  return mrb_fixnum_value(counter);
+}
+
 static mrb_value mrb_redis_ttl(mrb_state *mrb, mrb_value self)
 {
   mrb_value key;
@@ -1398,6 +1417,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_method(mrb, redis, "hmset", mrb_redis_hmset, (MRB_ARGS_REQ(3) | MRB_ARGS_REST()));
   mrb_define_method(mrb, redis, "hmget", mrb_redis_hmget, (MRB_ARGS_REQ(2) | MRB_ARGS_REST()));
   mrb_define_method(mrb, redis, "hvals", mrb_redis_hvals, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, redis, "hincrby", mrb_redis_hincrby, MRB_ARGS_REQ(3));
   mrb_define_method(mrb, redis, "ttl", mrb_redis_ttl, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, redis, "zadd", mrb_redis_zadd, MRB_ARGS_REQ(3));
   mrb_define_method(mrb, redis, "zcard", mrb_redis_zcard, MRB_ARGS_REQ(1));
