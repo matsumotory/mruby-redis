@@ -453,7 +453,7 @@ assert("Redis#sadd") do
   assert_equal 1, r.sismember('set', 'buzz')
   assert_equal 0, r.sismember('set', 'foo')
 
-  assert_equal ['bar', 'buzz'], r.smembers('set')
+  assert_equal ['bar', 'buzz'], r.smembers('set').sort
 
   r.flushall
 
