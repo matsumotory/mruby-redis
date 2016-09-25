@@ -1366,6 +1366,84 @@ static mrb_value mrb_redisGetBulkReply(mrb_state *mrb, mrb_value self)
   return bulk_reply;
 }
 
+static mrb_value mrb_redis_multi(mrb_state *mrb, mrb_value self)
+{
+  redisContext *rc = DATA_PTR(self);
+  redisReply *rr = redisCommand(rc, "MULTI");
+
+  mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
+  freeReplyObject(rr);
+  return str;
+}
+
+static mrb_value mrb_redis_exec(mrb_state *mrb, mrb_value self)
+{
+  redisContext *rc = DATA_PTR(self);
+  mrb_value array = mrb_nil_value();
+  redisReply *rr = redisCommand(rc, "EXEC");
+
+  if (rr->elements > 0) {
+    array = mrb_ary_new(mrb);
+    for (int i = 0; i < rr->elements; i++) {
+      mrb_ary_push(mrb, array, mrb_str_new_cstr(mrb, rr->element[i]->str));
+    }
+  }
+
+  freeReplyObject(rr);
+  return array;
+}
+
+static mrb_value mrb_redis_discard(mrb_state *mrb, mrb_value self)
+{
+  redisContext *rc = DATA_PTR(self);
+  redisReply *rr = redisCommand(rc, "DISCARD");
+
+  mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
+  freeReplyObject(rr);
+  return str;
+}
+
+static mrb_value mrb_redis_watch(mrb_state *mrb, mrb_value self)
+{
+  redisContext *rc = DATA_PTR(self);
+  mrb_int argc = 0, rest_argc = 0;
+  mrb_value key, *mrb_rest_argv;
+
+  mrb_get_args(mrb, "o*", &key, &mrb_rest_argv, &rest_argc);
+  argc = rest_argc + 2;
+
+  const char *argv[argc];
+  size_t argvlen[argc];
+  CREATE_REDIS_COMMAND_ARG1(argv, argvlen, "WATCH", key);
+
+  if (argc > 2) {
+    int ai = mrb_gc_arena_save(mrb);
+    mrb_int argc_current;
+    for (argc_current = 2; argc_current < argc; argc_current++) {
+      mrb_value curr = mrb_str_to_str(mrb, mrb_rest_argv[argc_current - 2]);
+      argv[argc_current] = RSTRING_PTR(curr);
+      argvlen[argc_current] = RSTRING_LEN(curr);
+      mrb_gc_arena_restore(mrb, ai);
+    }
+  }
+
+  redisReply *rr = redisCommandArgv(rc, argc, argv, argvlen);
+  mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
+  freeReplyObject(rr);
+  return str;
+
+}
+
+static mrb_value mrb_redis_unwatch(mrb_state *mrb, mrb_value self)
+{
+  redisContext *rc = DATA_PTR(self);
+  redisReply *rr = redisCommand(rc, "UNWATCH");
+
+  mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
+  freeReplyObject(rr);
+  return str;
+}
+
 void mrb_mruby_redis_gem_init(mrb_state *mrb)
 {
   struct RClass *redis, *redis_error;
@@ -1434,6 +1512,11 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_method(mrb, redis, "queue", mrb_redisAppendCommandArgv, (MRB_ARGS_REQ(1) | MRB_ARGS_REST()));
   mrb_define_method(mrb, redis, "reply", mrb_redisGetReply, MRB_ARGS_NONE());
   mrb_define_method(mrb, redis, "bulk_reply", mrb_redisGetBulkReply, MRB_ARGS_NONE());
+  mrb_define_method(mrb, redis, "multi", mrb_redis_multi, MRB_ARGS_NONE());
+  mrb_define_method(mrb, redis, "exec", mrb_redis_exec, MRB_ARGS_NONE());
+  mrb_define_method(mrb, redis, "discard", mrb_redis_discard, MRB_ARGS_NONE());
+  mrb_define_method(mrb, redis, "watch", mrb_redis_watch, (MRB_ARGS_REQ(1) | MRB_ARGS_REST()));
+  mrb_define_method(mrb, redis, "unwatch", mrb_redis_unwatch, MRB_ARGS_NONE());
   DONE;
 }
 

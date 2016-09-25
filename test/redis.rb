@@ -698,3 +698,92 @@ assert("Redis#pfmerge") do
   assert_equal 5, r.pfcount("foobar")
   assert_equal 7, r.pfcount("foobarbaz")
 end
+
+assert("Redis#multi") do
+  client1 = Redis.new HOST, PORT
+  client2 = Redis.new HOST, PORT
+  client1.del "hoge"
+
+  ret1 = client1.multi
+  client1.set "hoge", "fuga"
+  ret2 = client2.get "hoge"
+
+  assert_equal "OK", ret1
+  assert_equal nil, ret2
+
+  client1.discard
+end
+
+assert("Redis#exec") do
+  client1 = Redis.new HOST, PORT
+  client2 = Redis.new HOST, PORT
+  client1.del "hoge"
+
+  client1.multi
+  client1.set "hoge", "fuga"
+  ret1 = client1.exec
+  ret2 = client2.get "hoge"
+
+  assert_equal ["OK"], ret1
+  assert_equal "fuga", ret2
+end
+
+assert("Redis#discard") do
+  client1 = Redis.new HOST, PORT
+  client2 = Redis.new HOST, PORT
+  client1.del "hoge"
+
+  client1.multi
+  client1.set "hoge", "fuga"
+  ret1 = client1.discard
+  ret2 = client2.get "hoge"
+  ret3 = client1.discard
+
+  assert_equal "OK", ret1
+  assert_equal nil, ret2
+  assert_not_equal "OK", ret3
+end
+
+assert("Redis#watch") do
+  client1 = Redis.new HOST, PORT
+  client2 = Redis.new HOST, PORT
+  client1.set "hoge", "1"
+  client1.set "fuga", "2"
+
+  ret1 = client1.watch "hoge", "fuga"
+  client1.multi
+  client1.set "hoge", "10"
+  client1.set "fuga", "20"
+  ret2 = client1.exec
+
+  client1.watch "hoge", "fuga"
+  client1.multi
+  client1.set "hoge", "100"
+  client1.set "fuga", "200"
+  client2.set "hoge", "-100"
+  ret3 = client1.exec
+  ret4 = client1.get "hoge"
+
+  assert_equal "OK", ret1
+  assert_equal ["OK", "OK"], ret2
+  assert_equal nil, ret3
+  assert_equal "-100", ret4
+end
+
+assert("Redis#unwatch") do
+  client1 = Redis.new HOST, PORT
+  client2 = Redis.new HOST, PORT
+  client1.set "hoge", "1"
+  client1.set "fuga", "2"
+
+  client1.watch "hoge", "fuga"
+  ret1 = client1.unwatch
+  client1.multi
+  client1.set "hoge", "100"
+  client1.set "fuga", "200"
+  client2.set "hoge", "-100"
+  ret2 = client1.exec
+
+  assert_equal "OK", ret1
+  assert_not_equal nil, ret2
+end

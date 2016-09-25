@@ -366,6 +366,39 @@ client.zscore "hs", "a"
 
 See [`example/redis.rb`](https://github.com/matsumoto-r/mruby-redis/blob/master/example/redis.rb) for more details.
 
+#### `Redis#multi` [doc](http://redis.io/commands/multi)
+
+```ruby
+# start new transaction. Its finished by exec or discard
+client.multi
+```
+
+#### `Redis#exec` [doc](http://redis.io/commands/exec)
+
+```ruby
+# execute the transaction
+client.exec
+```
+
+#### `Redis#discard` [doc](http://redis.io/commands/discard)
+
+```ruby
+# discard the transaction
+client.discard
+```
+
+#### `Redis#watch` [doc](http://redis.io/commands/watch)
+
+```ruby
+# watch key(s) for a transaction
+client.watch "key1", "key2"
+```
+
+#### `Redis#unwatch` [doc](http://redis.io/commands/unwatch)
+
+```ruby
+client.unwatch
+```
 
 ## LICENSE
 
