@@ -701,6 +701,24 @@ static mrb_value mrb_redis_hset(mrb_state *mrb, mrb_value self)
   return integer ? mrb_true_value() : mrb_false_value();
 }
 
+static mrb_value mrb_redis_hsetnx(mrb_state *mrb, mrb_value self)
+{
+  mrb_value key, field, val;
+  redisContext *rc = DATA_PTR(self);
+  mrb_int integer;
+  const char *argv[4];
+  size_t lens[4];
+  redisReply *rs;
+
+  mrb_get_args(mrb, "ooo", &key, &field, &val);
+  CREATE_REDIS_COMMAND_ARG3(argv, lens, "HSETNX", key, field, val);
+  rs = redisCommandArgv(rc, 4, argv, lens);
+  integer = rs->integer;
+  freeReplyObject(rs);
+
+  return integer ? mrb_true_value() : mrb_false_value();
+}
+
 static mrb_value mrb_redis_hget(mrb_state *mrb, mrb_value self)
 {
   mrb_value key, field;
@@ -1487,6 +1505,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_method(mrb, redis, "scard", mrb_redis_scard, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "spop", mrb_redis_spop, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "hset", mrb_redis_hset, MRB_ARGS_REQ(3));
+  mrb_define_method(mrb, redis, "hsetnx", mrb_redis_hsetnx, MRB_ARGS_REQ(3));
   mrb_define_method(mrb, redis, "hget", mrb_redis_hget, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, redis, "hgetall", mrb_redis_hgetall, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "hdel", mrb_redis_hdel, MRB_ARGS_REQ(2));
