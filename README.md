@@ -172,6 +172,13 @@ client.hset "myhash", "field1", "a"
 ```
 
 
+#### `Redis#hsetnx` [doc](http://redis.io/commands/hsetnx)
+
+```ruby
+client.hsetnx "myhash", "field1", "a"
+```
+
+
 #### `Redis#hincrby` [doc](http://redis.io/commands/hincrby)
 
 ```ruby

@@ -198,6 +198,21 @@ assert("Redis#hset", "Redis#hget") do
   assert_equal "f\0", ret_get_f4
 end
 
+assert("Redis#hsetnx") do
+  r = Redis.new HOST, PORT
+  r.del "myhash"
+
+  ret1 = r.hsetnx "myhash", "field1", "a"
+  ret2 = r.hget "myhash", "field1"
+  ret3 = r.hsetnx "myhash", "field1", "b"
+  ret4 = r.hget "myhash", "field1"
+
+  assert_true ret1
+  assert_equal "a", ret2
+  assert_false ret3
+  assert_equal "a", ret4
+end
+
 assert("Redis#hgetall") do
   r = Redis.new HOST, PORT
   r.del "myhash"
