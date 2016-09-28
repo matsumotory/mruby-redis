@@ -831,20 +831,25 @@ static mrb_value mrb_redis_hkeys(mrb_state *mrb, mrb_value self)
 
 static mrb_value mrb_redis_hmget(mrb_state *mrb, mrb_value self)
 {
-  mrb_value *mrb_argv;
+  mrb_value *mrb_argv, array;
   mrb_int argc = 0;
-  int i;
+  int i, ai;
+  const char **argv;
+  size_t *argvlen;
+  mrb_int argc_current;
+  redisContext *rc;
+  redisReply *rr;
 
   mrb_get_args(mrb, "*", &mrb_argv, &argc);
   argc++;
 
-  const char *argv[argc];
-  size_t argvlen[argc];
+  argv = (const char **)alloca(argc * sizeof(char *));
+  argvlen = (size_t *)alloca(argc * sizeof(size_t));
+
   argv[0] = "HMGET";
   argvlen[0] = sizeof("HMGET") - 1;
 
-  int ai = mrb_gc_arena_save(mrb);
-  mrb_int argc_current;
+  ai = mrb_gc_arena_save(mrb);
   for (argc_current = 1; argc_current < argc; argc_current++) {
     mrb_value curr = mrb_str_to_str(mrb, mrb_argv[argc_current - 1]);
     argv[argc_current] = RSTRING_PTR(curr);
@@ -852,9 +857,8 @@ static mrb_value mrb_redis_hmget(mrb_state *mrb, mrb_value self)
     mrb_gc_arena_restore(mrb, ai);
   }
 
-  mrb_value array = mrb_nil_value();
-  redisContext *rc = DATA_PTR(self);
-  redisReply *rr;
+  array = mrb_nil_value();
+  rc = DATA_PTR(self);
   rr = redisCommandArgv(rc, argc, argv, argvlen);
   if (rr->type == REDIS_REPLY_ARRAY) {
     if (rr->elements > 0) {
@@ -882,17 +886,20 @@ static mrb_value mrb_redis_hmset(mrb_state *mrb, mrb_value self)
   mrb_int argc = 0;
   redisContext *rc = DATA_PTR(self);
   redisReply *rr;
+  const char **argv;
+  size_t *argvlen;
+  int ai;
+  mrb_int argc_current;
 
   mrb_get_args(mrb, "*", &mrb_argv, &argc);
   argc++;
+  argv = (const char **)alloca(argc * sizeof(char *));
+  argvlen = (size_t *)alloca(argc * sizeof(size_t));
 
-  const char *argv[argc];
-  size_t argvlen[argc];
   argv[0] = "HMSET";
   argvlen[0] = sizeof("HMSET") - 1;
 
-  int ai = mrb_gc_arena_save(mrb);
-  mrb_int argc_current;
+  ai = mrb_gc_arena_save(mrb);
   for (argc_current = 1; argc_current < argc; argc_current++) {
     mrb_value curr = mrb_str_to_str(mrb, mrb_argv[argc_current - 1]);
     argv[argc_current] = RSTRING_PTR(curr);
@@ -1121,12 +1128,15 @@ static mrb_value mrb_redis_pfadd(mrb_state *mrb, mrb_value self)
   redisContext *rc = DATA_PTR(self);
   redisReply *rr;
   mrb_int integer;
+  const char **argv;
+  size_t *argvlen;
 
   mrb_get_args(mrb, "o*", &key, &mrb_rest_argv, &rest_argc);
   argc = rest_argc + 2;
 
-  const char *argv[argc];
-  size_t argvlen[argc];
+  argv = (const char **)alloca(argc * sizeof(char *));
+  argvlen = (size_t *)alloca(argc * sizeof(size_t));
+
   CREATE_REDIS_COMMAND_ARG1(argv, argvlen, "PFADD", key);
 
   if (argc > 2) {
@@ -1154,12 +1164,15 @@ static mrb_value mrb_redis_pfcount(mrb_state *mrb, mrb_value self)
   redisContext *rc = DATA_PTR(self);
   redisReply *rr;
   mrb_int integer;
+  const char **argv;
+  size_t *argvlen;
 
   mrb_get_args(mrb, "o*", &key, &mrb_rest_argv, &rest_argc);
   argc = rest_argc + 2;
 
-  const char *argv[argc];
-  size_t argvlen[argc];
+  argv = (const char **)alloca(argc * sizeof(char *));
+  argvlen = (size_t *)alloca(argc * sizeof(size_t));
+
   CREATE_REDIS_COMMAND_ARG1(argv, argvlen, "PFCOUNT", key);
 
   if (argc > 2) {
@@ -1186,12 +1199,15 @@ static mrb_value mrb_redis_pfmerge(mrb_state *mrb, mrb_value self)
   mrb_int argc = 0, rest_argc = 0;
   redisContext *rc = DATA_PTR(self);
   redisReply *rr;
+  const char **argv;
+  size_t *argvlen;
 
   mrb_get_args(mrb, "oo*", &dest_struct, &src_struct, &mrb_rest_argv, &rest_argc);
   argc = rest_argc + 3;
 
-  const char *argv[argc];
-  size_t argvlen[argc];
+  argv = (const char **)alloca(argc * sizeof(char *));
+  argvlen = (size_t *)alloca(argc * sizeof(size_t));
+
   CREATE_REDIS_COMMAND_ARG2(argv, argvlen, "PFMERGE", dest_struct, src_struct);
 
   if (argc > 3) {
@@ -1278,27 +1294,34 @@ static mrb_value mrb_redisAppendCommandArgv(mrb_state *mrb, mrb_value self)
 {
   mrb_sym command;
   mrb_value *mrb_argv;
-  mrb_int argc = 0;
+  mrb_int argc = 0, argc_current;
+  const char **argv;
+  size_t *argvlen;
+  mrb_int command_len;
+  mrb_sym queue_counter_sym;
+  mrb_value queue_counter_val;
+  mrb_int queue_counter;
+  redisContext *context;
+  int rc;
 
   mrb_get_args(mrb, "n*", &command, &mrb_argv, &argc);
   argc++;
 
-  const char *argv[argc];
-  size_t argvlen[argc];
-  mrb_int command_len;
+  argv = (const char **)alloca(argc * sizeof(char *));
+  argvlen = (size_t *)alloca(argc * sizeof(size_t));
+
   argv[0] = mrb_sym2name_len(mrb, command, &command_len);
   argvlen[0] = command_len;
 
-  mrb_int argc_current;
   for (argc_current = 1; argc_current < argc; argc_current++) {
     mrb_value curr = mrb_str_to_str(mrb, mrb_argv[argc_current - 1]);
     argv[argc_current] = RSTRING_PTR(curr);
     argvlen[argc_current] = RSTRING_LEN(curr);
   }
 
-  mrb_sym queue_counter_sym = mrb_intern_lit(mrb, "queue_counter");
-  mrb_value queue_counter_val = mrb_iv_get(mrb, self, queue_counter_sym);
-  mrb_int queue_counter = 1;
+  queue_counter_sym = mrb_intern_lit(mrb, "queue_counter");
+  queue_counter_val = mrb_iv_get(mrb, self, queue_counter_sym);
+  queue_counter = 1;
   if (mrb_fixnum_p(queue_counter_val)) {
     queue_counter = mrb_fixnum(queue_counter_val);
     if (mrb_int_add_overflow(queue_counter, 1, &queue_counter)) {
@@ -1306,9 +1329,9 @@ static mrb_value mrb_redisAppendCommandArgv(mrb_state *mrb, mrb_value self)
     }
   }
 
-  redisContext *context = (redisContext *)DATA_PTR(self);
+  context = (redisContext *)DATA_PTR(self);
   errno = 0;
-  int rc = redisAppendCommandArgv(context, argc, argv, argvlen);
+  rc = redisAppendCommandArgv(context, argc, argv, argvlen);
   if (rc == REDIS_OK) {
     mrb_iv_set(mrb, self, queue_counter_sym, mrb_fixnum_value(queue_counter));
   } else {
@@ -1323,15 +1346,19 @@ static mrb_value mrb_redisGetReply(mrb_state *mrb, mrb_value self)
   mrb_sym queue_counter_sym = mrb_intern_lit(mrb, "queue_counter");
   mrb_value queue_counter_val = mrb_iv_get(mrb, self, queue_counter_sym);
   mrb_int queue_counter = -1;
+  redisContext *context;
+  redisReply *reply = NULL;
+  mrb_value reply_val;
+  int rc;
+
   if (mrb_fixnum_p(queue_counter_val)) {
     queue_counter = mrb_fixnum(queue_counter_val);
   }
 
-  redisContext *context = (redisContext *)DATA_PTR(self);
-  redisReply *reply = NULL;
-  mrb_value reply_val = self;
+  context = (redisContext *)DATA_PTR(self);
+  reply_val = self;
   errno = 0;
-  int rc = redisGetReply(context, (void **)&reply);
+  rc = redisGetReply(context, (void **)&reply);
   if (rc == REDIS_OK && reply != NULL) {
     struct mrb_jmpbuf *prev_jmp = mrb->jmp;
     struct mrb_jmpbuf c_jmp;
@@ -1366,14 +1393,16 @@ static mrb_value mrb_redisGetReply(mrb_state *mrb, mrb_value self)
 static mrb_value mrb_redisGetBulkReply(mrb_state *mrb, mrb_value self)
 {
   mrb_value queue_counter_val = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "queue_counter"));
+  mrb_int queue_counter;
+  mrb_value bulk_reply;
+  int ai;
 
   if (!mrb_fixnum_p(queue_counter_val))
     mrb_raise(mrb, E_RUNTIME_ERROR, "nothing queued yet");
 
-  mrb_int queue_counter = mrb_fixnum(queue_counter_val);
-
-  mrb_value bulk_reply = mrb_ary_new_capa(mrb, queue_counter);
-  int ai = mrb_gc_arena_save(mrb);
+  queue_counter = mrb_fixnum(queue_counter_val);
+  bulk_reply = mrb_ary_new_capa(mrb, queue_counter);
+  ai = mrb_gc_arena_save(mrb);
 
   do {
     mrb_value reply = mrb_redisGetReply(mrb, self);
@@ -1427,12 +1456,17 @@ static mrb_value mrb_redis_watch(mrb_state *mrb, mrb_value self)
   redisContext *rc = DATA_PTR(self);
   mrb_int argc = 0, rest_argc = 0;
   mrb_value key, *mrb_rest_argv;
+  const char **argv;
+  size_t *argvlen;
+  redisReply *rr;
+  mrb_value str;
 
   mrb_get_args(mrb, "o*", &key, &mrb_rest_argv, &rest_argc);
   argc = rest_argc + 2;
 
-  const char *argv[argc];
-  size_t argvlen[argc];
+  argv = (const char **)alloca(argc * sizeof(char *));
+  argvlen = (size_t *)alloca(argc * sizeof(size_t));
+
   CREATE_REDIS_COMMAND_ARG1(argv, argvlen, "WATCH", key);
 
   if (argc > 2) {
@@ -1446,8 +1480,8 @@ static mrb_value mrb_redis_watch(mrb_state *mrb, mrb_value self)
     }
   }
 
-  redisReply *rr = redisCommandArgv(rc, argc, argv, argvlen);
-  mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
+  rr = redisCommandArgv(rc, argc, argv, argvlen);
+  str = mrb_str_new(mrb, rr->str, rr->len);
   freeReplyObject(rr);
   return str;
 
