@@ -1401,8 +1401,9 @@ static mrb_value mrb_redis_exec(mrb_state *mrb, mrb_value self)
   redisReply *rr = redisCommand(rc, "EXEC");
 
   if (rr->elements > 0) {
+    int i;
     array = mrb_ary_new(mrb);
-    for (int i = 0; i < rr->elements; i++) {
+    for (i = 0; i < rr->elements; i++) {
       mrb_ary_push(mrb, array, mrb_str_new_cstr(mrb, rr->element[i]->str));
     }
   }
