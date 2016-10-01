@@ -336,13 +336,12 @@ static mrb_value mrb_redis_flushall(mrb_state *mrb, mrb_value self)
 static mrb_value mrb_redis_randomkey(mrb_state *mrb, mrb_value self)
 {
   redisContext *rc = DATA_PTR(self);
-  mrb_value str;
   redisReply *rs = redisCommand(rc, "RANDOMKEY");
   if (rc->err) {
     mrb_redis_check_error(rc, mrb);
   }
   if (rs->type == REDIS_REPLY_STRING) {
-    str = mrb_str_new(mrb, rs->str, rs->len);
+    mrb_value str = mrb_str_new(mrb, rs->str, rs->len);
     freeReplyObject(rs);
     return str;
   } else {
@@ -631,7 +630,6 @@ static mrb_value mrb_redis_lindex(mrb_state *mrb, mrb_value self)
   mrb_value key;
   mrb_int pos;
   redisContext *rc = DATA_PTR(self);
-  mrb_value str;
   redisReply *rr;
 
   mrb_get_args(mrb, "oi", &key, &pos);
@@ -640,7 +638,7 @@ static mrb_value mrb_redis_lindex(mrb_state *mrb, mrb_value self)
     mrb_redis_check_error(rc, mrb);
   }
   if (rr->type == REDIS_REPLY_STRING) {
-    str = mrb_str_new(mrb, rr->str, rr->len);
+    mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
     freeReplyObject(rr);
     return str;
   } else {
