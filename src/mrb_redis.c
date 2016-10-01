@@ -127,6 +127,21 @@ static mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
   return self;
 }
 
+static mrb_value mrb_redis_ping(mrb_state *mrb, mrb_value self)
+{
+  redisContext *rc = DATA_PTR(self);
+  mrb_value str;
+  redisReply *rs = redisCommand(rc, "PING");
+
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
+
+  str = mrb_str_new(mrb, rs->str, rs->len);
+  freeReplyObject(rs);
+  return str;
+}
+
 static mrb_value mrb_redis_select(mrb_state *mrb, mrb_value self)
 {
   mrb_value database;
@@ -1671,6 +1686,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
 
   mrb_define_method(mrb, redis, "initialize", mrb_redis_connect, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "select", mrb_redis_select, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, redis, "ping", mrb_redis_ping, MRB_ARGS_NONE());
   mrb_define_method(mrb, redis, "set", mrb_redis_set, MRB_ARGS_ARG(2, 1));
   mrb_define_method(mrb, redis, "get", mrb_redis_get, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "exists?", mrb_redis_exists, MRB_ARGS_REQ(1));
