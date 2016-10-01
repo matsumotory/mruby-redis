@@ -140,6 +140,9 @@ static mrb_value mrb_redis_select(mrb_state *mrb, mrb_value self)
   }
 
   rs = redisCommand(rc, "SELECT %d", mrb_fixnum(database));
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   freeReplyObject(rs);
 
   return self;
@@ -198,6 +201,9 @@ static mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
   }
 
   rs = redisCommandArgv(rc, c, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   freeReplyObject(rs);
 
   return self;
@@ -216,6 +222,9 @@ static mrb_value mrb_redis_get(mrb_state *mrb, mrb_value self)
   CREATE_REDIS_COMMAND_ARG1(argv, lens, "GET", key);
 
   rs = redisCommandArgv(rc, 2, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   if (rs->type == REDIS_REPLY_STRING) {
     mrb_value str = mrb_str_new(mrb, rs->str, rs->len);
     freeReplyObject(rs);
@@ -234,6 +243,9 @@ static mrb_value mrb_redis_keys(mrb_state *mrb, mrb_value self)
 
   mrb_get_args(mrb, "o", &pattern);
   rr = redisCommand(rc, "KEYS %s", mrb_str_to_cstr(mrb, pattern));
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   if (rr->type == REDIS_REPLY_ARRAY) {
     if (rr->elements > 0) {
       int i;
@@ -262,6 +274,9 @@ static mrb_value mrb_redis_exists(mrb_state *mrb, mrb_value self)
   CREATE_REDIS_COMMAND_ARG1(argv, lens, "EXISTS", key);
 
   rr = redisCommandArgv(rc, 2, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   counter = rr->integer;
   freeReplyObject(rr);
 
@@ -284,6 +299,9 @@ static mrb_value mrb_redis_expire(mrb_state *mrb, mrb_value self)
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "EXPIRE", key, val);
 
   rr = redisCommandArgv(rc, 3, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   counter = rr->integer;
   freeReplyObject(rr);
 
@@ -307,6 +325,9 @@ static mrb_value mrb_redis_flushall(mrb_state *mrb, mrb_value self)
   mrb_value str;
   redisReply *rs = redisCommand(rc, "FLUSHALL");
 
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   str = mrb_str_new(mrb, rs->str, rs->len);
   freeReplyObject(rs);
   return str;
@@ -315,8 +336,10 @@ static mrb_value mrb_redis_flushall(mrb_state *mrb, mrb_value self)
 static mrb_value mrb_redis_randomkey(mrb_state *mrb, mrb_value self)
 {
   redisContext *rc = DATA_PTR(self);
-
   redisReply *rs = redisCommand(rc, "RANDOMKEY");
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   if (rs->type == REDIS_REPLY_STRING) {
     mrb_value str = mrb_str_new(mrb, rs->str, rs->len);
     freeReplyObject(rs);
@@ -339,6 +362,9 @@ static mrb_value mrb_redis_del(mrb_state *mrb, mrb_value self)
   CREATE_REDIS_COMMAND_ARG1(argv, lens, "DEL", key);
 
   rs = redisCommandArgv(rc, 2, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   freeReplyObject(rs);
 
   return self;
@@ -356,6 +382,9 @@ static mrb_value mrb_redis_incr(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "o", &key);
   CREATE_REDIS_COMMAND_ARG1(argv, lens, "INCR", key);
   rr = redisCommandArgv(rc, 2, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   counter = rr->integer;
   freeReplyObject(rr);
 
@@ -374,6 +403,9 @@ static mrb_value mrb_redis_decr(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "o", &key);
   CREATE_REDIS_COMMAND_ARG1(argv, lens, "DECR", key);
   rr = redisCommandArgv(rc, 2, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   counter = rr->integer;
   freeReplyObject(rr);
 
@@ -394,6 +426,9 @@ static mrb_value mrb_redis_incrby(mrb_state *mrb, mrb_value self)
   val_str = mrb_fixnum_to_str(mrb, mrb_fixnum_value(val), 10);
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "INCRBY", key, val_str);
   rr = redisCommandArgv(rc, 3, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   counter = rr->integer;
   freeReplyObject(rr);
 
@@ -414,6 +449,9 @@ static mrb_value mrb_redis_decrby(mrb_state *mrb, mrb_value self)
   val_str = mrb_fixnum_to_str(mrb, mrb_fixnum_value(val), 10);
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "DECRBY", key, val_str);
   rr = redisCommandArgv(rc, 3, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   counter = rr->integer;
   freeReplyObject(rr);
 
@@ -429,6 +467,9 @@ static mrb_value mrb_redis_llen(mrb_state *mrb, mrb_value self)
 
   mrb_get_args(mrb, "o", &key);
   rr = redisCommand(rc, "LLEN %s", mrb_str_to_cstr(mrb, key));
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   integer = rr->integer;
   freeReplyObject(rr);
 
@@ -447,6 +488,9 @@ static mrb_value mrb_redis_rpush(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "oo", &key, &val);
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "RPUSH", key, val);
   rr = redisCommandArgv(rc, 3, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   integer = rr->integer;
   freeReplyObject(rr);
 
@@ -465,6 +509,9 @@ static mrb_value mrb_redis_lpush(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "oo", &key, &val);
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "LPUSH", key, val);
   rr = redisCommandArgv(rc, 3, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   integer = rr->integer;
   freeReplyObject(rr);
 
@@ -482,6 +529,9 @@ static mrb_value mrb_redis_rpop(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "o", &key);
   CREATE_REDIS_COMMAND_ARG1(argv, lens, "RPOP", key);
   rr = redisCommandArgv(rc, 2, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   if (rr->type == REDIS_REPLY_STRING) {
     mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
     freeReplyObject(rr);
@@ -503,6 +553,9 @@ static mrb_value mrb_redis_lpop(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "o", &key);
   CREATE_REDIS_COMMAND_ARG1(argv, lens, "LPOP", key);
   rr = redisCommandArgv(rc, 2, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   if (rr->type == REDIS_REPLY_STRING) {
     mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
     freeReplyObject(rr);
@@ -530,6 +583,9 @@ static mrb_value mrb_redis_lrange(mrb_state *mrb, mrb_value self)
 
   CREATE_REDIS_COMMAND_ARG3(argv, lens, "LRANGE", list, val_str1, val_str2);
   rr = redisCommandArgv(rc, 4, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   if (rr->type == REDIS_REPLY_ARRAY) {
     array = mrb_ary_new(mrb);
     for (i = 0; i < rr->elements; i++) {
@@ -560,6 +616,9 @@ static mrb_value mrb_redis_ltrim(mrb_state *mrb, mrb_value self)
   val_str2 = mrb_fixnum_to_str(mrb, mrb_fixnum_value(arg2), 10);
   CREATE_REDIS_COMMAND_ARG3(argv, lens, "LTRIM", list, val_str1, val_str2);
   rr = redisCommandArgv(rc, 4, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   integer = rr->integer;
   freeReplyObject(rr);
 
@@ -575,6 +634,9 @@ static mrb_value mrb_redis_lindex(mrb_state *mrb, mrb_value self)
 
   mrb_get_args(mrb, "oi", &key, &pos);
   rr = redisCommand(rc, "LINDEX %s %d", RSTRING_PTR(key), pos);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   if (rr->type == REDIS_REPLY_STRING) {
     mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
     freeReplyObject(rr);
@@ -599,6 +661,9 @@ static mrb_value mrb_redis_sadd(mrb_state *mrb, mrb_value self)
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "SADD", key, val);
 
   rr = redisCommandArgv(rc, 3, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   integer = rr->integer;
   freeReplyObject(rr);
 
@@ -617,6 +682,9 @@ static mrb_value mrb_redis_sismember(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "oo", &key, &val);
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "SISMEMBER", key, val);
   rr = redisCommandArgv(rc, 3, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   integer = rr->integer;
   freeReplyObject(rr);
 
@@ -632,6 +700,9 @@ static mrb_value mrb_redis_smembers(mrb_state *mrb, mrb_value self)
 
   mrb_get_args(mrb, "o", &key);
   rr = redisCommand(rc, "SMEMBERS %s", mrb_str_to_cstr(mrb, key));
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   if (rr->type == REDIS_REPLY_ARRAY) {
     array = mrb_ary_new(mrb);
     for (i = 0; i < rr->elements; i++) {
@@ -656,6 +727,9 @@ static mrb_value mrb_redis_scard(mrb_state *mrb, mrb_value self)
 
   mrb_get_args(mrb, "o", &key);
   rr = redisCommand(rc, "SCARD %s", mrb_str_to_cstr(mrb, key));
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   integer = rr->integer;
   freeReplyObject(rr);
 
@@ -673,6 +747,9 @@ static mrb_value mrb_redis_spop(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "o", &key);
   CREATE_REDIS_COMMAND_ARG1(argv, lens, "SPOP", key);
   rr = redisCommandArgv(rc, 2, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   if (rr->type == REDIS_REPLY_STRING) {
     mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
     freeReplyObject(rr);
@@ -695,6 +772,9 @@ static mrb_value mrb_redis_hset(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "ooo", &key, &field, &val);
   CREATE_REDIS_COMMAND_ARG3(argv, lens, "HSET", key, field, val);
   rs = redisCommandArgv(rc, 4, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   integer = rs->integer;
   freeReplyObject(rs);
 
@@ -713,6 +793,9 @@ static mrb_value mrb_redis_hsetnx(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "ooo", &key, &field, &val);
   CREATE_REDIS_COMMAND_ARG3(argv, lens, "HSETNX", key, field, val);
   rs = redisCommandArgv(rc, 4, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   integer = rs->integer;
   freeReplyObject(rs);
 
@@ -730,6 +813,9 @@ static mrb_value mrb_redis_hget(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "oo", &key, &field);
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "HGET", key, field);
   rs = redisCommandArgv(rc, 3, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   if (rs->type == REDIS_REPLY_STRING) {
     mrb_value str = mrb_str_new(mrb, rs->str, rs->len);
     freeReplyObject(rs);
@@ -751,6 +837,9 @@ static mrb_value mrb_redis_hgetall(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "o", &obj);
   CREATE_REDIS_COMMAND_ARG1(argv, lens, "HGETALL", obj);
   rr = redisCommandArgv(rc, 2, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   if (rr->type == REDIS_REPLY_ARRAY) {
     if (rr->elements > 0) {
       int i;
@@ -778,6 +867,9 @@ static mrb_value mrb_redis_hdel(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "oo", &key, &val);
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "HDEL", key, val);
   rr = redisCommandArgv(rc, 3, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   integer = rr->integer;
   freeReplyObject(rr);
 
@@ -798,6 +890,9 @@ static mrb_value mrb_redis_hexists(mrb_state *mrb, mrb_value self)
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "HEXISTS", key, field);
 
   rr = redisCommandArgv(rc, 3, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   counter = rr->integer;
   freeReplyObject(rr);
 
@@ -815,6 +910,9 @@ static mrb_value mrb_redis_hkeys(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "o", &key);
   CREATE_REDIS_COMMAND_ARG1(argv, lens, "HKEYS", key);
   rr = redisCommandArgv(rc, 2, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   if (rr->type == REDIS_REPLY_ARRAY) {
     if (rr->elements > 0) {
       int i;
@@ -860,6 +958,9 @@ static mrb_value mrb_redis_hmget(mrb_state *mrb, mrb_value self)
   array = mrb_nil_value();
   rc = DATA_PTR(self);
   rr = redisCommandArgv(rc, argc, argv, argvlen);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   if (rr->type == REDIS_REPLY_ARRAY) {
     if (rr->elements > 0) {
       array = mrb_ary_new(mrb);
@@ -908,6 +1009,9 @@ static mrb_value mrb_redis_hmset(mrb_state *mrb, mrb_value self)
   }
 
   rr = redisCommandArgv(rc, argc, argv, argvlen);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   if (rr->type == REDIS_REPLY_STATUS && rr != NULL) {
     freeReplyObject(rr);
   } else {
@@ -928,6 +1032,9 @@ static mrb_value mrb_redis_hvals(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "o", &key);
   CREATE_REDIS_COMMAND_ARG1(argv, lens, "HVALS", key);
   rr = redisCommandArgv(rc, 2, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   if (rr->type == REDIS_REPLY_ARRAY) {
     if (rr->elements > 0) {
       int i;
@@ -955,6 +1062,9 @@ static mrb_value mrb_redis_hincrby(mrb_state *mrb, mrb_value self)
   val_str = mrb_fixnum_to_str(mrb, mrb_fixnum_value(val), 10);
   CREATE_REDIS_COMMAND_ARG3(argv, lens, "HINCRBY", key, field, val_str);
   rr = redisCommandArgv(rc, 4, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   counter = rr->integer;
   freeReplyObject(rr);
 
@@ -973,6 +1083,9 @@ static mrb_value mrb_redis_ttl(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "o", &key);
   CREATE_REDIS_COMMAND_ARG1(argv, lens, "TTL", key);
   rr = redisCommandArgv(rc, 2, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   integer = rr->integer;
   freeReplyObject(rr);
 
@@ -993,6 +1106,9 @@ static mrb_value mrb_redis_zadd(mrb_state *mrb, mrb_value self)
   score_str = mrb_float_to_str(mrb, mrb_float_value(mrb, score), "%f");
   CREATE_REDIS_COMMAND_ARG3(argv, lens, "ZADD", key, score_str, member);
   rs = redisCommandArgv(rc, 4, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   freeReplyObject(rs);
 
   return self;
@@ -1007,6 +1123,9 @@ static mrb_value mrb_redis_zcard(mrb_state *mrb, mrb_value self)
 
   mrb_get_args(mrb, "o", &key);
   rr = redisCommand(rc, "ZCARD %s", mrb_str_to_cstr(mrb, key));
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   integer = rr->integer;
   freeReplyObject(rr);
 
@@ -1029,6 +1148,9 @@ static mrb_value mrb_redis_basic_zrange(mrb_state *mrb, mrb_value self, const ch
   arg2_str = mrb_fixnum_to_str(mrb, mrb_fixnum_value(arg2), 10);
   CREATE_REDIS_COMMAND_ARG3(argv, lens, "ZADD", list, arg1_str, arg2_str);
   rr = redisCommandArgv(rc, 4, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   if (rr->type == REDIS_REPLY_ARRAY) {
     array = mrb_ary_new(mrb);
     for (i = 0; i < rr->elements; i++) {
@@ -1066,6 +1188,9 @@ static mrb_value mrb_redis_basic_zrank(mrb_state *mrb, mrb_value self, const cha
   mrb_get_args(mrb, "oo", &key, &member);
   CREATE_REDIS_COMMAND_ARG2(argv, lens, cmd, key, member);
   rr = redisCommandArgv(rc, 3, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   rank = rr->integer;
   freeReplyObject(rr);
 
@@ -1093,6 +1218,9 @@ static mrb_value mrb_redis_zscore(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "oo", &key, &member);
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "ZSCORE", key, member);
   rr = redisCommandArgv(rc, 3, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   score = mrb_str_new(mrb, rr->str, rr->len);
   freeReplyObject(rr);
 
@@ -1110,7 +1238,9 @@ static mrb_value mrb_redis_pub(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "oo", &channel, &msg);
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "PUBLISH", channel, msg);
   rr = redisCommandArgv(rc, 3, argv, lens);
-
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   if (rr->type == REDIS_REPLY_INTEGER) {
     res = mrb_fixnum_value(rr->integer);
   } else {
@@ -1151,6 +1281,9 @@ static mrb_value mrb_redis_pfadd(mrb_state *mrb, mrb_value self)
   }
 
   rr = redisCommandArgv(rc, argc, argv, argvlen);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   integer = rr->integer;
   freeReplyObject(rr);
 
@@ -1187,6 +1320,9 @@ static mrb_value mrb_redis_pfcount(mrb_state *mrb, mrb_value self)
   }
 
   rr = redisCommandArgv(rc, argc, argv, argvlen);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   integer = rr->integer;
   freeReplyObject(rr);
 
@@ -1221,6 +1357,9 @@ static mrb_value mrb_redis_pfmerge(mrb_state *mrb, mrb_value self)
     }
   }
 
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
   rr = redisCommandArgv(rc, argc, argv, argvlen);
   if (rr->type == REDIS_REPLY_STRING) {
     mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
@@ -1417,8 +1556,13 @@ static mrb_value mrb_redis_multi(mrb_state *mrb, mrb_value self)
 {
   redisContext *rc = DATA_PTR(self);
   redisReply *rr = redisCommand(rc, "MULTI");
+  mrb_value str;
 
-  mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
+
+  str = mrb_str_new(mrb, rr->str, rr->len);
   freeReplyObject(rr);
   return str;
 }
@@ -1428,6 +1572,9 @@ static mrb_value mrb_redis_exec(mrb_state *mrb, mrb_value self)
   redisContext *rc = DATA_PTR(self);
   mrb_value array = mrb_nil_value();
   redisReply *rr = redisCommand(rc, "EXEC");
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
 
   if (rr->elements > 0) {
     int i;
@@ -1445,8 +1592,13 @@ static mrb_value mrb_redis_discard(mrb_state *mrb, mrb_value self)
 {
   redisContext *rc = DATA_PTR(self);
   redisReply *rr = redisCommand(rc, "DISCARD");
+  mrb_value str;
 
-  mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
+
+  str = mrb_str_new(mrb, rr->str, rr->len);
   freeReplyObject(rr);
   return str;
 }
@@ -1481,18 +1633,26 @@ static mrb_value mrb_redis_watch(mrb_state *mrb, mrb_value self)
   }
 
   rr = redisCommandArgv(rc, argc, argv, argvlen);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
+
   str = mrb_str_new(mrb, rr->str, rr->len);
   freeReplyObject(rr);
   return str;
-
 }
 
 static mrb_value mrb_redis_unwatch(mrb_state *mrb, mrb_value self)
 {
   redisContext *rc = DATA_PTR(self);
   redisReply *rr = redisCommand(rc, "UNWATCH");
+  mrb_value str;
 
-  mrb_value str = mrb_str_new(mrb, rr->str, rr->len);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
+
+  str = mrb_str_new(mrb, rr->str, rr->len);
   freeReplyObject(rr);
   return str;
 }
