@@ -606,16 +606,10 @@ static mrb_value mrb_redis_sadd(mrb_state *mrb, mrb_value self)
   argv = (const char **)mrb_calloc(mrb, argc, sizeof(char *));
   lens = (size_t *)mrb_calloc(mrb, argc, sizeof(size_t));
 
-  if (members_len == 1) {
-
-    CREATE_REDIS_COMMAND_ARG2(argv, lens, "SADD", key, *members);
-  } else {
-
-    CREATE_REDIS_COMMAND_ARG1(argv, lens, "SADD", key);
-    for (i = 0; i < members_len; i++) {
-      argv[i + 2] = RSTRING_PTR(members[i]);
-      lens[i + 2] = RSTRING_LEN(members[i]);
-    }
+  CREATE_REDIS_COMMAND_ARG1(argv, lens, "SADD", key);
+  for (i = 0; i < members_len; i++) {
+    argv[i + 2] = RSTRING_PTR(members[i]);
+    lens[i + 2] = RSTRING_LEN(members[i]);
   }
 
   rr = redisCommandArgv(rc, argc, argv, lens);
