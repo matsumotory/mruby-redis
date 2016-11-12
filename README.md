@@ -81,6 +81,20 @@ TBD
 client.del "key"
 ```
 
+#### `Redis#discard` [doc](http://redis.io/commands/discard)
+
+```ruby
+# discard the transaction
+client.discard
+```
+
+#### `Redis#exec` [doc](http://redis.io/commands/exec)
+
+```ruby
+# execute the transaction
+client.exec
+```
+
 #### `Redis#exists?` [doc](http://redis.io/commands/exists?)
 
 ```ruby
@@ -236,6 +250,13 @@ client.lrange "logs", 0, -1
 client.ltrim "logs", 1, -1
 ```
 
+#### `Redis#multi` [doc](http://redis.io/commands/multi)
+
+```ruby
+# start new transaction. Its finished by exec or discard
+client.multi
+```
+
 
 #### `Redis#publish` [doc](http://redis.io/commands/publish)
 
@@ -325,6 +346,21 @@ TBD
 TBD
 
 
+#### `Redis#unwatch` [doc](http://redis.io/commands/unwatch)
+
+```ruby
+client.unwatch
+```
+
+
+#### `Redis#watch` [doc](http://redis.io/commands/watch)
+
+```ruby
+# watch key(s) for a transaction
+client.watch "key1", "key2"
+```
+
+
 #### `Redis#zadd` [doc](http://redis.io/commands/zadd)
 
 ```ruby
@@ -372,40 +408,6 @@ client.zscore "hs", "a"
 ```
 
 See [`example/redis.rb`](https://github.com/matsumoto-r/mruby-redis/blob/master/example/redis.rb) for more details.
-
-#### `Redis#multi` [doc](http://redis.io/commands/multi)
-
-```ruby
-# start new transaction. Its finished by exec or discard
-client.multi
-```
-
-#### `Redis#exec` [doc](http://redis.io/commands/exec)
-
-```ruby
-# execute the transaction
-client.exec
-```
-
-#### `Redis#discard` [doc](http://redis.io/commands/discard)
-
-```ruby
-# discard the transaction
-client.discard
-```
-
-#### `Redis#watch` [doc](http://redis.io/commands/watch)
-
-```ruby
-# watch key(s) for a transaction
-client.watch "key1", "key2"
-```
-
-#### `Redis#unwatch` [doc](http://redis.io/commands/unwatch)
-
-```ruby
-client.unwatch
-```
 
 ## LICENSE
 
