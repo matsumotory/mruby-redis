@@ -10,8 +10,9 @@ language: c
 compiler:
   - gcc
   - clang
-services:
-  - redis-server
+before_script:
+  - redis-server --port 6379 &
+  - redis-server --port 6380 --requirepass 'secret' &
 script:
   - rake test
 notifications:

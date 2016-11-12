@@ -14,6 +14,7 @@ extern "C" {
 #endif
 #define E_REDIS_ERR_PROTOCOL (mrb_class_get_under(mrb, mrb_class_get(mrb, "Redis"), "ProtocolError"))
 #define E_REDIS_ERR_OOM (mrb_class_get_under(mrb, mrb_class_get(mrb, "Redis"), "OOMError"))
+#define E_REDIS_ERR_AUTH (mrb_class_get_under(mrb, mrb_class_get(mrb, "Redis"), "AuthError"))
 
 #ifdef __cplusplus
 }

@@ -38,9 +38,16 @@ end
 ```ruby
 client = Redis.new "127.0.0.1", 6379, 2 # Connect to the server
 client.select 0                         # Select the database
+client.auth "secret"                    # Required if Redis is password-protected
 ```
 
 ### Commands
+
+#### `Redis#auth` [doc](http://redis.io/commands/auth)
+
+```ruby
+client.auth "secret"
+```
 
 #### `Redis#[]=`
 

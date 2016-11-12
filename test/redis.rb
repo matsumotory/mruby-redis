@@ -2,8 +2,9 @@
 ## Redis Test
 ##
 
-HOST = "127.0.0.1"
-PORT = 6379
+HOST         = "127.0.0.1"
+PORT         = 6379
+SECURED_PORT = 6380
 
 assert("Redis#ping") do
   r = Redis.new HOST, PORT
@@ -807,4 +808,32 @@ assert("Redis#unwatch") do
 
   assert_equal "OK", ret1
   assert_not_equal nil, ret2
+end
+
+assert("Redis#auth") do
+  r = Redis.new HOST, SECURED_PORT
+  res = begin
+          r.ping
+        rescue => e
+          e
+        end
+  assert_equal "NOAUTH Authentication required.", res
+
+  res = begin
+          r.auth(nil)
+        rescue Redis::AuthError => e
+          e
+        end
+  assert_equal "password should be a string", res.message
+
+  res = begin
+        r.auth("wrong secret")
+      rescue => e
+        e
+      end
+  assert_kind_of(Redis::AuthError, res)
+  assert_equal "incorrect password", res.message
+
+  assert_equal r.auth("secret"), r
+  assert_equal "PONG", r.ping
 end

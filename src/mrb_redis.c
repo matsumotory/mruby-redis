@@ -68,6 +68,8 @@
   lens[2] = RSTRING_LEN(arg2);                                                                                         \
   lens[3] = RSTRING_LEN(arg3)
 
+static inline mrb_value mrb_redis_get_reply(redisReply *reply, mrb_state *mrb);
+
 static void redisContext_free(mrb_state *mrb, void *p)
 {
   redisFree(p);
@@ -141,6 +143,31 @@ static mrb_value mrb_redis_ping(mrb_state *mrb, mrb_value self)
   freeReplyObject(rs);
   return str;
 }
+
+static mrb_value mrb_redis_auth(mrb_state *mrb, mrb_value self)
+{
+  mrb_value password;
+  redisReply *rs;
+
+  redisContext *rc = DATA_PTR(self);
+  mrb_get_args(mrb, "o", &password);
+
+  if (mrb_type(password) != MRB_TT_STRING) {
+    mrb_raisef(mrb, E_REDIS_ERR_AUTH, "password should be a string");
+  }
+
+  rs = redisCommand(rc, "AUTH %s", RSTRING_PTR(password));
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
+
+  if(rs->type == REDIS_REPLY_ERROR) {
+    mrb_raisef(mrb, E_REDIS_ERR_AUTH, "incorrect password");
+  } else {
+    return self;
+  }
+}
+
 
 static mrb_value mrb_redis_select(mrb_state *mrb, mrb_value self)
 {
@@ -1683,8 +1710,10 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_class_under(mrb, redis, "ReplyError", redis_error);
   mrb_define_class_under(mrb, redis, "ProtocolError", redis_error);
   mrb_define_class_under(mrb, redis, "OOMError", redis_error);
+  mrb_define_class_under(mrb, redis, "AuthError", redis_error);
 
   mrb_define_method(mrb, redis, "initialize", mrb_redis_connect, MRB_ARGS_ANY());
+  mrb_define_method(mrb, redis, "auth", mrb_redis_auth, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "select", mrb_redis_select, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "ping", mrb_redis_ping, MRB_ARGS_NONE());
   mrb_define_method(mrb, redis, "set", mrb_redis_set, MRB_ARGS_ARG(2, 1));
