@@ -258,6 +258,13 @@ client.multi
 ```
 
 
+#### `Redis#ping` [doc](http://redis.io/commands/ping)
+
+```ruby
+pong = client.ping
+```
+
+
 #### `Redis#publish` [doc](http://redis.io/commands/publish)
 
 ```ruby
