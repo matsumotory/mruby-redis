@@ -691,18 +691,32 @@ static mrb_value mrb_redis_lindex(mrb_state *mrb, mrb_value self)
 
 static mrb_value mrb_redis_sadd(mrb_state *mrb, mrb_value self)
 {
-  mrb_value key, val;
-  mrb_int integer;
-  const char *argv[3];
-  size_t lens[3];
+  mrb_value key, *members;
+  mrb_int integer, members_len;
+  const char **argv;
+  size_t *lens;
+  size_t argc;
+  int i;
   redisReply *rr;
 
   redisContext *rc = DATA_PTR(self);
 
-  mrb_get_args(mrb, "oo", &key, &val);
-  CREATE_REDIS_COMMAND_ARG2(argv, lens, "SADD", key, val);
+  mrb_get_args(mrb, "o*", &key, &members, &members_len);
+  if (members_len == 0) {
+    mrb_raise(mrb, E_ARGUMENT_ERROR, "too few arguments");
+  }
+  argc = 2 + members_len;
 
-  rr = redisCommandArgv(rc, 3, argv, lens);
+  argv = (const char **)alloca(argc * sizeof(char *));
+  lens = (size_t *)alloca(argc * sizeof(size_t));
+
+  CREATE_REDIS_COMMAND_ARG1(argv, lens, "SADD", key);
+  for (i = 0; i < members_len; i++) {
+    argv[i + 2] = RSTRING_PTR(members[i]);
+    lens[i + 2] = RSTRING_LEN(members[i]);
+  }
+
+  rr = redisCommandArgv(rc, argc, argv, lens);
   if (rc->err) {
     mrb_redis_check_error(rc, mrb);
   }
@@ -1739,7 +1753,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_method(mrb, redis, "lrange", mrb_redis_lrange, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "ltrim", mrb_redis_ltrim, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "lindex", mrb_redis_lindex, MRB_ARGS_REQ(2));
-  mrb_define_method(mrb, redis, "sadd", mrb_redis_sadd, MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, redis, "sadd", mrb_redis_sadd, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "sismember", mrb_redis_sismember, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, redis, "smembers", mrb_redis_smembers, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "scard", mrb_redis_scard, MRB_ARGS_REQ(1));
