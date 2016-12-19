@@ -1,4 +1,4 @@
-# mruby-redis [![Build Status](https://travis-ci.org/matsumoto-r/mruby-redis.svg?branch=master)](https://travis-ci.org/matsumoto-r/mruby-redis)
+# mruby-redis [![Build Status](https://travis-ci.org/matsumoto-r/mruby-redis.svg?branch=master)](https://travis-ci.org/matsumotory/mruby-redis)
 
 [Hiredis](https://github.com/redis/hiredis) binding for mruby. Hiredis is a
 minimalistic C client library for the Redis database. Redis is an open source,
