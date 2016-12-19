@@ -46,4 +46,5 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
   spec.linker.flags_before_libraries << "#{hiredis_dir}/lib/libhiredis.a"
 
   spec.add_dependency "mruby-sleep"
+  spec.add_dependency "mruby-pointer", :github => 'matsumotory/mruby-pointer'
 end
