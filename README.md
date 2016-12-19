@@ -354,6 +354,12 @@ TBD
 
 TBD
 
+#### `Redis#srem` [doc](http://redis.io/commands/srem)
+
+```ruby
+client.srem "set", "fuge", "hoga"
+```
+
 
 #### `Redis#ttl` [doc](http://redis.io/commands/ttl)
 
