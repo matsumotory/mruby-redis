@@ -149,6 +149,7 @@ static mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
   mrb_value host, port;
   mrb_int timeout = 1;
   struct timeval timeout_struct = {timeout, 0};
+  mrb_int argc = 0;
 
   redisContext *rc = (redisContext *)DATA_PTR(self);
   if (rc) {
@@ -157,11 +158,17 @@ static mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
   DATA_TYPE(self) = &redisContext_type;
   DATA_PTR(self) = NULL;
 
-  if (mrb_get_args(mrb, "oo|i", &host, &port, &timeout) == 3) {
+  argc = mrb_get_args(mrb, "|oo|i", &host, &port, &timeout);
+
+  if (argc == 3) {
     timeout_struct.tv_sec = timeout;
+    rc = redisConnectWithTimeout(mrb_str_to_cstr(mrb, host), mrb_fixnum(port), timeout_struct);
+  } else if (argc == 2) {
+    rc = redisConnectWithTimeout(mrb_str_to_cstr(mrb, host), mrb_fixnum(port), timeout_struct);
+  } else if (argc == 0) {
+    rc = (redisContext *)mrb_udptr_get(mrb);
   }
 
-  rc = redisConnectWithTimeout(mrb_str_to_cstr(mrb, host), mrb_fixnum(port), timeout_struct);
   if (rc->err) {
     mrb_raise(mrb, E_REDIS_ERROR, "redis connection failed.");
   }
