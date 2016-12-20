@@ -1793,6 +1793,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
 
   /* use mruby-pointer for sharing between mrb_states */
   mrb_define_class_method(mrb, redis, "connect_set_raw", mrb_redis_connect_set_raw, MRB_ARGS_ANY());
+  mrb_define_class_method(mrb, redis, "connect_set_udptr", mrb_redis_connect_set_raw, MRB_ARGS_ANY());
 
   mrb_define_method(mrb, redis, "auth", mrb_redis_auth, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "select", mrb_redis_select, MRB_ARGS_REQ(1));
