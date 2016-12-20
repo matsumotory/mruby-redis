@@ -103,26 +103,6 @@ static inline void mrb_redis_check_error(redisContext *context, mrb_state *mrb)
   }
 }
 
-static mrb_value mrb_redis_connect_get_raw(mrb_state *mrb, mrb_value self)
-{
-  redisContext *rc = (redisContext *)DATA_PTR(self);
-
-  if (rc) {
-    mrb_free(mrb, rc);
-  }
-  DATA_TYPE(self) = &redisContext_type;
-  DATA_PTR(self) = NULL;
-
-  rc = mrb_udptr_get(mrb);
-  if (rc->err) {
-    mrb_raise(mrb, E_REDIS_ERROR, "redis connection failed.");
-  }
-
-  DATA_PTR(self) = rc;
-
-  return self;
-}
-
 static mrb_value mrb_redis_connect_set_raw(mrb_state *mrb, mrb_value self)
 {
   redisContext *rc;
@@ -1813,7 +1793,6 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
 
   /* use mruby-pointer for sharing between mrb_states */
   mrb_define_class_method(mrb, redis, "connect_set_raw", mrb_redis_connect_set_raw, MRB_ARGS_ANY());
-  mrb_define_class_method(mrb, redis, "connect_get_raw", mrb_redis_connect_get_raw, MRB_ARGS_ANY());
 
   mrb_define_method(mrb, redis, "auth", mrb_redis_auth, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "select", mrb_redis_select, MRB_ARGS_REQ(1));
