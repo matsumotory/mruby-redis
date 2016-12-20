@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "mrb_pointer.h"
 
 #define DONE mrb_gc_arena_restore(mrb, 0);
 
@@ -102,11 +103,33 @@ static inline void mrb_redis_check_error(redisContext *context, mrb_state *mrb)
   }
 }
 
+static mrb_value mrb_redis_connect_set_raw(mrb_state *mrb, mrb_value self)
+{
+  redisContext *rc;
+  mrb_value host, port;
+  mrb_int timeout = 1;
+  struct timeval timeout_struct = {timeout, 0};
+
+  if (mrb_get_args(mrb, "oo|i", &host, &port, &timeout) == 3) {
+    timeout_struct.tv_sec = timeout;
+  }
+
+  rc = redisConnectWithTimeout(mrb_str_to_cstr(mrb, host), mrb_fixnum(port), timeout_struct);
+  if (rc->err) {
+    mrb_raise(mrb, E_REDIS_ERROR, "redis connection failed.");
+  }
+
+  mrb_udptr_set(mrb, (void *)rc);
+
+  return self;
+}
+
 static mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
 {
   mrb_value host, port;
   mrb_int timeout = 1;
   struct timeval timeout_struct = {timeout, 0};
+  mrb_int argc = 0;
 
   redisContext *rc = (redisContext *)DATA_PTR(self);
   if (rc) {
@@ -115,11 +138,17 @@ static mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
   DATA_TYPE(self) = &redisContext_type;
   DATA_PTR(self) = NULL;
 
-  if (mrb_get_args(mrb, "oo|i", &host, &port, &timeout) == 3) {
+  argc = mrb_get_args(mrb, "|oo|i", &host, &port, &timeout);
+
+  if (argc == 3) {
     timeout_struct.tv_sec = timeout;
+    rc = redisConnectWithTimeout(mrb_str_to_cstr(mrb, host), mrb_fixnum(port), timeout_struct);
+  } else if (argc == 2) {
+    rc = redisConnectWithTimeout(mrb_str_to_cstr(mrb, host), mrb_fixnum(port), timeout_struct);
+  } else if (argc == 0) {
+    rc = (redisContext *)mrb_udptr_get(mrb);
   }
 
-  rc = redisConnectWithTimeout(mrb_str_to_cstr(mrb, host), mrb_fixnum(port), timeout_struct);
   if (rc->err) {
     mrb_raise(mrb, E_REDIS_ERROR, "redis connection failed.");
   }
@@ -1761,6 +1790,10 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_class_under(mrb, redis, "AuthError", redis_error);
 
   mrb_define_method(mrb, redis, "initialize", mrb_redis_connect, MRB_ARGS_ANY());
+
+  /* use mruby-pointer for sharing between mrb_states */
+  mrb_define_class_method(mrb, redis, "connect_set_raw", mrb_redis_connect_set_raw, MRB_ARGS_ANY());
+
   mrb_define_method(mrb, redis, "auth", mrb_redis_auth, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "select", mrb_redis_select, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "ping", mrb_redis_ping, MRB_ARGS_NONE());
