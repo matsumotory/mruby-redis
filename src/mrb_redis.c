@@ -1190,6 +1190,102 @@ static mrb_value mrb_redis_hincrby(mrb_state *mrb, mrb_value self)
   return mrb_fixnum_value(counter);
 }
 
+static mrb_value mrb_redis_mset(mrb_state *mrb, mrb_value self)
+{
+  mrb_value *mrb_argv;
+  mrb_int argc = 0;
+  redisContext *rc = DATA_PTR(self);
+  redisReply *rr;
+  const char **argv;
+  size_t *argvlen;
+  int ai;
+  mrb_int argc_current;
+
+  mrb_get_args(mrb, "*", &mrb_argv, &argc);
+  argc++;
+  argv = (const char **)alloca(argc * sizeof(char *));
+  argvlen = (size_t *)alloca(argc * sizeof(size_t));
+
+  argv[0] = "MSET";
+  argvlen[0] = sizeof("MSET") - 1;
+
+  ai = mrb_gc_arena_save(mrb);
+  for (argc_current = 1; argc_current < argc; argc_current++) {
+    mrb_value curr = mrb_str_to_str(mrb, mrb_argv[argc_current - 1]);
+    argv[argc_current] = RSTRING_PTR(curr);
+    argvlen[argc_current] = RSTRING_LEN(curr);
+    mrb_gc_arena_restore(mrb, ai);
+  }
+
+  rr = redisCommandArgv(rc, argc, argv, argvlen);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
+  if (rr->type == REDIS_REPLY_STATUS && rr != NULL) {
+    freeReplyObject(rr);
+  } else {
+    mrb_raise(mrb, E_ARGUMENT_ERROR, rr->str);
+  }
+
+  return self;
+}
+
+static mrb_value mrb_redis_mget(mrb_state *mrb, mrb_value self)
+{
+  mrb_value *mrb_argv, array;
+  mrb_int argc = 0;
+  int i, ai;
+  const char **argv;
+  size_t *argvlen;
+  mrb_int argc_current;
+  redisContext *rc;
+  redisReply *rr;
+
+  mrb_get_args(mrb, "*", &mrb_argv, &argc);
+  argc++;
+
+  argv = (const char **)alloca(argc * sizeof(char *));
+  argvlen = (size_t *)alloca(argc * sizeof(size_t));
+
+  argv[0] = "MGET";
+  argvlen[0] = sizeof("MGET") - 1;
+
+  ai = mrb_gc_arena_save(mrb);
+  for (argc_current = 1; argc_current < argc; argc_current++) {
+    mrb_value curr = mrb_str_to_str(mrb, mrb_argv[argc_current - 1]);
+    argv[argc_current] = RSTRING_PTR(curr);
+    argvlen[argc_current] = RSTRING_LEN(curr);
+    mrb_gc_arena_restore(mrb, ai);
+  }
+
+  array = mrb_nil_value();
+  rc = DATA_PTR(self);
+  rr = redisCommandArgv(rc, argc, argv, argvlen);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
+  if (rr->type == REDIS_REPLY_ARRAY) {
+    if (rr->elements > 0) {
+      array = mrb_ary_new(mrb);
+
+      for (i = 0; i < rr->elements; i++) {
+        if (rr->element[i]->len > 0) {
+          mrb_ary_push(mrb, array, mrb_str_new(mrb, rr->element[i]->str, rr->element[i]->len));
+        } else {
+          mrb_ary_push(mrb, array, mrb_nil_value());
+        }
+      }
+    }
+  } else {
+    mrb_raise(mrb, E_ARGUMENT_ERROR, rr->str);
+  }
+
+  freeReplyObject(rr);
+  return array;
+}
+
+
+
 static mrb_value mrb_redis_ttl(mrb_state *mrb, mrb_value self)
 {
   mrb_value key;
@@ -1821,6 +1917,8 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_method(mrb, redis, "lrange", mrb_redis_lrange, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "ltrim", mrb_redis_ltrim, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "lindex", mrb_redis_lindex, MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, redis, "mset", mrb_redis_mset, MRB_ARGS_ANY());
+  mrb_define_method(mrb, redis, "mget", mrb_redis_mget, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "sadd", mrb_redis_sadd, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "srem", mrb_redis_srem, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "sismember", mrb_redis_sismember, MRB_ARGS_REQ(2));
