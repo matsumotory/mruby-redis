@@ -257,6 +257,17 @@ client.lrange "logs", 0, -1
 client.ltrim "logs", 1, -1
 ```
 
+#### `Redis#mset` [doc](http://redis.io/commnads/mset)
+
+```ruby
+client.mset "key1", "value1", "key2", "value2"
+```
+
+#### `Redis#mget` [doc](http://redis.io/commnads/mget)
+```ruby
+client.mset "key1", "key2"
+```
+
 #### `Redis#multi` [doc](http://redis.io/commands/multi)
 
 ```ruby
