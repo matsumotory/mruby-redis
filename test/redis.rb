@@ -474,6 +474,39 @@ assert("Redis#lpop") do
   assert_equal ["two", "three"], range2
 end
 
+assert('Redis#mget') do
+  r = Redis.new HOST, PORT
+
+  r.set "foo", "hoge"
+  r.set "bar", "fuga"
+  ret1 = r.mget("foo", "bar")
+  r.flushall
+
+  r.set "one", "1"
+  ret2 = r.mget("one", "two")
+  r.flushall
+
+  ret3 = r.mget("piyo","puyo")
+  r.close
+
+  assert_equal ["hoge", "fuga"], ret1
+  assert_equal ["1", nil], ret2
+  assert_equal [nil, nil], ret3
+end
+
+assert('Redis#mset, Redis#mget') do
+  r = Redis.new HOST, PORT
+
+  r.mset "hoge", "one", "fuga", "two"
+  ret = r.mget("hoge", "fuga", "piyo")
+  r.flushall
+
+  r.close
+
+  assert_equal ["one", "two", nil ], ret
+end
+
+
 assert("Redis#sadd") do
   r = Redis.new HOST, PORT
   assert_equal 1, r.sadd('set', 'test')
