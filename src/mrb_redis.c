@@ -1872,6 +1872,28 @@ static mrb_value mrb_redis_unwatch(mrb_state *mrb, mrb_value self)
   return str;
 }
 
+static mrb_value mrb_redis_setnx(mrb_state *mrb, mrb_value self)
+{
+  mrb_value key, val;
+  redisContext *rc = DATA_PTR(self);
+  mrb_int integer;
+  const char *argv[3];
+  size_t lens[3];
+  redisReply *rs;
+
+  mrb_get_args(mrb, "oo", &key, &val);
+  CREATE_REDIS_COMMAND_ARG2(argv, lens, "SETNX", key, val);
+  rs = redisCommandArgv(rc, 3, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
+  }
+  integer = rs->integer;
+  freeReplyObject(rs);
+
+  return mrb_bool_value(integer == 1);
+}
+
+
 void mrb_mruby_redis_gem_init(mrb_state *mrb)
 {
   struct RClass *redis, *redis_error;
@@ -1957,6 +1979,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_method(mrb, redis, "discard", mrb_redis_discard, MRB_ARGS_NONE());
   mrb_define_method(mrb, redis, "watch", mrb_redis_watch, (MRB_ARGS_REQ(1) | MRB_ARGS_REST()));
   mrb_define_method(mrb, redis, "unwatch", mrb_redis_unwatch, MRB_ARGS_NONE());
+  mrb_define_method(mrb, redis, "setnx", mrb_redis_setnx, MRB_ARGS_REQ(2));
   DONE;
 }
 
