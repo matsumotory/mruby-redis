@@ -58,6 +58,17 @@ assert("Redis#set, Redis#get") do
 
   assert_equal "fuga", ret
 end
+
+assert("Redis#setnx, Redis#get") do
+  r = Redis.new HOST, PORT
+  r.flushall
+  assert_true r.setnx( "hoge", "fuga")
+  assert_false r.setnx( "hoge", "piyo")
+  ret = r.get "hoge"
+
+  assert_equal "fuga", ret
+end
+
 assert("Redis#[]=, Redis#[]") do
   r = Redis.new HOST, PORT
   r["hoge"] = "fuga"

@@ -351,6 +351,15 @@ client.set key, "200"
 ```
 
 
+#### `Redis#setnx` [doc](http://redis.io/commands/setnx)
+
+```ruby
+client.setnx key, "foo" # => true
+client.setnx key, "bar" # => false
+client.get key          # => "foo"
+```
+
+
 #### `Redis#sismember` [doc](http://redis.io/commands/sismember)
 
 TBD
