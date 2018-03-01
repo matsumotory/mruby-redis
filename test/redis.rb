@@ -95,6 +95,12 @@ assert("Redis#set with conflict opts") do
   r.close
 end
 
+assert("Redis#set with unknown keys") do
+  r = Redis.new HOST, PORT
+  assert_raise(ArgumentError){ r.set( "hoge", "fuga", :EX => 100)}
+  r.close
+end
+
 assert("Redis#setnx, Redis#get") do
   r = Redis.new HOST, PORT
   r.flushall

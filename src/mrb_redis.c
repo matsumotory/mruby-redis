@@ -232,10 +232,10 @@ static mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
 
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "SET", key, val);
   if (b) {
-    mrb_value ex = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "EX"));
-    mrb_value px = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "PX"));
-    mrb_bool nx = mrb_bool(mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "NX")));
-    mrb_bool xx = mrb_bool(mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "XX")));
+    mrb_value ex = mrb_hash_delete_key(mrb, opt, mrb_str_new_cstr(mrb, "EX"));
+    mrb_value px = mrb_hash_delete_key(mrb, opt, mrb_str_new_cstr(mrb, "PX"));
+    mrb_bool nx = mrb_bool(mrb_hash_delete_key(mrb, opt, mrb_str_new_cstr(mrb, "NX")));
+    mrb_bool xx = mrb_bool(mrb_hash_delete_key(mrb, opt, mrb_str_new_cstr(mrb, "XX")));
 
     if (!mrb_nil_p(ex) && !mrb_nil_p(px)) {
       mrb_raise(mrb, E_ARGUMENT_ERROR, "Only one of EX or PX can be set");
@@ -285,6 +285,11 @@ static mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
       argv[c] = "XX";
       lens[c] = strlen("XX");
       c++;
+    }
+
+    if (!mrb_bool(mrb_hash_empty_p(mrb, opt))) {
+      mrb_raisef(mrb, E_ARGUMENT_ERROR, "unknown option(s) specified %S (note: only string can be key, not the symbol",
+                 mrb_hash_keys(mrb, opt));
     }
   }
 
