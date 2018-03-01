@@ -41,6 +41,14 @@ assert("Redis#set, Redis#get") do
   assert_equal "fuga", ret
 end
 
+assert("Redis#set, Redis#get for non-string") do
+  r = Redis.new HOST, PORT
+  assert_raise(TypeError) {r.set :hoge, 'bar'}
+  assert_raise(TypeError) {r.set 'hoge', 10}
+  assert_raise(TypeError) {r.get :hoge}
+  r.close
+end
+
 assert("Redis#set, Redis#get") do
   r = Redis.new HOST, PORT
   r.set( "hoge", "fuga", {EX: "10", PX: "1"})

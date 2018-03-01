@@ -228,7 +228,7 @@ static mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
   int c = 3;
   redisContext *rc = DATA_PTR(self);
 
-  mrb_get_args(mrb, "oo|H?", &key, &val, &opt, &b);
+  mrb_get_args(mrb, "SS|H?", &key, &val, &opt, &b);
 
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "SET", key, val);
   if (b) {
@@ -287,7 +287,7 @@ static mrb_value mrb_redis_get(mrb_state *mrb, mrb_value self)
   size_t lens[2];
   redisReply *rs;
 
-  mrb_get_args(mrb, "o", &key);
+  mrb_get_args(mrb, "S", &key);
 
   CREATE_REDIS_COMMAND_ARG1(argv, lens, "GET", key);
 
