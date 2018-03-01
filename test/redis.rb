@@ -49,22 +49,10 @@ assert("Redis#set, Redis#get for non-string") do
   r.close
 end
 
-assert("Redis#set, Redis#get") do
+assert("Redis#set with invalid args") do
   r = Redis.new HOST, PORT
-  r.set( "hoge", "fuga", {EX: "10", PX: "1"})
-  ret = r.get "hoge"
+  assert_raise(ArgumentError){r.set( "hoge", "fuga", {EX: "10", PX: "1"})}
   r.close
-
-  assert_equal "fuga", ret
-end
-
-assert("Redis#set, Redis#get") do
-  r = Redis.new HOST, PORT
-  r.set( "hoge", "fuga", {EX: "10", PX: "1"})
-  ret = r.get "hoge"
-  r.close
-
-  assert_equal "fuga", ret
 end
 
 assert("Redis#set with PX as int") do
