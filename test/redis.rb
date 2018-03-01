@@ -67,6 +67,13 @@ assert("Redis#set, Redis#get") do
   assert_equal "fuga", ret
 end
 
+assert("Redis#set with conflict opts") do
+  r = Redis.new HOST, PORT
+  assert_raise(ArgumentError){ r.set( "hoge", "fuga", "EX" => 1, "PX" => 100)}
+  assert_raise(ArgumentError){ r.set( "hoge", "fuga", "NX" => true, "XX" => true)}
+  r.close
+end
+
 assert("Redis#setnx, Redis#get") do
   r = Redis.new HOST, PORT
   r.flushall

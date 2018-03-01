@@ -232,23 +232,28 @@ static mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
 
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "SET", key, val);
   if (b) {
-    v = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "EX"));
-    if (!mrb_nil_p(v)) {
+    mrb_value ex = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "EX"));
+    mrb_value px = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "PX"));
+
+    if (!mrb_nil_p(ex) && !mrb_nil_p(px)) {
+      mrb_raise(mrb, E_ARGUMENT_ERROR, "Only one of EX or PX can be set");
+    }
+
+    if (!mrb_nil_p(ex)) {
       argv[c] = "EX";
       lens[c] = strlen("EX");
       c++;
-      argv[c] = RSTRING_PTR(v);
-      lens[c] = RSTRING_LEN(v);
+      argv[c] = RSTRING_PTR(ex);
+      lens[c] = RSTRING_LEN(ex);
       c++;
     }
 
-    v = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "PX"));
-    if (!mrb_nil_p(v)) {
+    if (!mrb_nil_p(px)) {
       argv[c] = "PX";
       lens[c] = strlen("PX");
       c++;
-      argv[c] = RSTRING_PTR(v);
-      lens[c] = RSTRING_LEN(v);
+      argv[c] = RSTRING_PTR(px);
+      lens[c] = RSTRING_LEN(px);
       c++;
     }
 
