@@ -67,6 +67,17 @@ assert("Redis#set, Redis#get") do
   assert_equal "fuga", ret
 end
 
+assert("Redis#set with PX as int") do
+  r = Redis.new HOST, PORT
+  r.set( "hoge", "fuga with PX as int", "PX" => 10_000)
+  ret = r.get "hoge"
+  ttl = r.ttl "hoge"
+  r.close
+
+  assert_equal "fuga with PX as int", ret
+  assert_true 0 < ttl && ttl <= 10
+end
+
 assert("Redis#set with conflict opts") do
   r = Redis.new HOST, PORT
   assert_raise(ArgumentError){ r.set( "hoge", "fuga", "EX" => 1, "PX" => 100)}

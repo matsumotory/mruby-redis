@@ -243,6 +243,12 @@ static mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
       argv[c] = "EX";
       lens[c] = strlen("EX");
       c++;
+      if (mrb_fixnum_p(ex)) {
+        ex = mrb_fixnum_to_str(mrb, ex, 10);
+      }
+      if (!mrb_string_p(ex)) {
+        mrb_raisef(mrb, E_TYPE_ERROR, "EX should be int or str, but %S given", ex);
+      }
       argv[c] = RSTRING_PTR(ex);
       lens[c] = RSTRING_LEN(ex);
       c++;
@@ -252,6 +258,12 @@ static mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
       argv[c] = "PX";
       lens[c] = strlen("PX");
       c++;
+      if (mrb_fixnum_p(px)) {
+        px = mrb_fixnum_to_str(mrb, px, 10);
+      }
+      if (!mrb_string_p(px)) {
+        mrb_raisef(mrb, E_TYPE_ERROR, "PX should be int or str, but %S given", px);
+      }
       argv[c] = RSTRING_PTR(px);
       lens[c] = RSTRING_LEN(px);
       c++;
