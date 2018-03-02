@@ -220,7 +220,7 @@ static mrb_value mrb_redis_select(mrb_state *mrb, mrb_value self)
 
 static mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
 {
-  mrb_value key, val, opt, v, w;
+  mrb_value key, val, opt;
   mrb_bool b = 0;
   redisReply *rs;
   const char *argv[7];
@@ -228,45 +228,68 @@ static mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
   int c = 3;
   redisContext *rc = DATA_PTR(self);
 
-  mrb_get_args(mrb, "oo|H?", &key, &val, &opt, &b);
+  mrb_get_args(mrb, "SS|H?", &key, &val, &opt, &b);
 
   CREATE_REDIS_COMMAND_ARG2(argv, lens, "SET", key, val);
   if (b) {
-    v = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "EX"));
-    if (!mrb_nil_p(v)) {
+    mrb_value ex = mrb_hash_delete_key(mrb, opt, mrb_str_new_cstr(mrb, "EX"));
+    mrb_value px = mrb_hash_delete_key(mrb, opt, mrb_str_new_cstr(mrb, "PX"));
+    mrb_bool nx = mrb_bool(mrb_hash_delete_key(mrb, opt, mrb_str_new_cstr(mrb, "NX")));
+    mrb_bool xx = mrb_bool(mrb_hash_delete_key(mrb, opt, mrb_str_new_cstr(mrb, "XX")));
+
+    if (!mrb_nil_p(ex) && !mrb_nil_p(px)) {
+      mrb_raise(mrb, E_ARGUMENT_ERROR, "Only one of EX or PX can be set");
+    }
+
+    if (nx && xx) {
+      mrb_raise(mrb, E_ARGUMENT_ERROR, "Either NX or XX is true");
+    }
+
+    if (!mrb_nil_p(ex)) {
       argv[c] = "EX";
       lens[c] = strlen("EX");
       c++;
-      argv[c] = RSTRING_PTR(v);
-      lens[c] = RSTRING_LEN(v);
+      if (mrb_fixnum_p(ex)) {
+        ex = mrb_fixnum_to_str(mrb, ex, 10);
+      }
+      if (!mrb_string_p(ex)) {
+        mrb_raisef(mrb, E_TYPE_ERROR, "EX should be int or str, but %S given", ex);
+      }
+      argv[c] = RSTRING_PTR(ex);
+      lens[c] = RSTRING_LEN(ex);
       c++;
     }
 
-    v = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "PX"));
-    if (!mrb_nil_p(v)) {
+    if (!mrb_nil_p(px)) {
       argv[c] = "PX";
       lens[c] = strlen("PX");
       c++;
-      argv[c] = RSTRING_PTR(v);
-      lens[c] = RSTRING_LEN(v);
+      if (mrb_fixnum_p(px)) {
+        px = mrb_fixnum_to_str(mrb, px, 10);
+      }
+      if (!mrb_string_p(px)) {
+        mrb_raisef(mrb, E_TYPE_ERROR, "PX should be int or str, but %S given", px);
+      }
+      argv[c] = RSTRING_PTR(px);
+      lens[c] = RSTRING_LEN(px);
       c++;
     }
 
-    v = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "NX"));
-    w = mrb_hash_get(mrb, opt, mrb_str_new_cstr(mrb, "XX"));
-    if (!mrb_nil_p(v) && !mrb_nil_p(w)) {
-      mrb_raise(mrb, E_ARGUMENT_ERROR, "Either NX or XX is true");
-    }
-    if (!mrb_nil_p(v)) {
+    if (nx) {
       argv[c] = "NX";
       lens[c] = strlen("NX");
       c++;
     }
 
-    if (!mrb_nil_p(w)) {
+    if (xx) {
       argv[c] = "XX";
       lens[c] = strlen("XX");
       c++;
+    }
+
+    if (!mrb_bool(mrb_hash_empty_p(mrb, opt))) {
+      mrb_raisef(mrb, E_ARGUMENT_ERROR, "unknown option(s) specified %S (note: only string can be key, not the symbol",
+                 mrb_hash_keys(mrb, opt));
     }
   }
 
@@ -287,7 +310,7 @@ static mrb_value mrb_redis_get(mrb_state *mrb, mrb_value self)
   size_t lens[2];
   redisReply *rs;
 
-  mrb_get_args(mrb, "o", &key);
+  mrb_get_args(mrb, "S", &key);
 
   CREATE_REDIS_COMMAND_ARG1(argv, lens, "GET", key);
 
