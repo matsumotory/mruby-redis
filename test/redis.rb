@@ -12,6 +12,15 @@ assert("Redis#ping") do
   assert_equal "PONG", r.ping
 end
 
+assert("Redis#host, Redis#port") do
+  r = Redis.new HOST, PORT
+
+  assert_equal HOST, r.host
+  assert_equal PORT, r.port
+
+  r.close
+end
+
 assert("Redis#select") do
   r = Redis.new HOST, PORT
   r.select 0

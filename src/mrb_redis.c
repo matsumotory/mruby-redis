@@ -158,6 +158,26 @@ static mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
   return self;
 }
 
+static mrb_value mrb_redis_host(mrb_state *mrb, mrb_value self)
+{
+  redisContext *rc = (redisContext *)DATA_PTR(self);
+  if (rc->connection_type != REDIS_CONN_TCP) {
+    // Never expect to come here since mruby-redis does not support unix socket connection...
+    return mrb_nil_value();
+  }
+  return mrb_str_new_cstr(mrb, rc->tcp.host);
+}
+
+static mrb_value mrb_redis_port(mrb_state *mrb, mrb_value self)
+{
+  redisContext *rc = (redisContext *)DATA_PTR(self);
+  if (rc->connection_type != REDIS_CONN_TCP) {
+    // Never expect to come here since mruby-redis does not support unix socket connection...
+    return mrb_nil_value();
+  }
+  return mrb_fixnum_value((mrb_int)(rc->tcp.port));
+}
+
 static mrb_value mrb_redis_ping(mrb_state *mrb, mrb_value self)
 {
   redisContext *rc = DATA_PTR(self);
@@ -1939,6 +1959,8 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_method(mrb, redis, "auth", mrb_redis_auth, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "select", mrb_redis_select, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "ping", mrb_redis_ping, MRB_ARGS_NONE());
+  mrb_define_method(mrb, redis, "host", mrb_redis_host, MRB_ARGS_NONE());
+  mrb_define_method(mrb, redis, "port", mrb_redis_port, MRB_ARGS_NONE());
   mrb_define_method(mrb, redis, "set", mrb_redis_set, MRB_ARGS_ARG(2, 1));
   mrb_define_method(mrb, redis, "get", mrb_redis_get, MRB_ARGS_ANY());
   mrb_define_method(mrb, redis, "exists?", mrb_redis_exists, MRB_ARGS_REQ(1));
