@@ -50,13 +50,13 @@
 #define CREATE_REDIS_COMMAND_ARG1(argv, lens, cmd, arg1)                                                               \
   argv[0] = cmd;                                                                                                       \
   argv[1] = RSTRING_PTR(arg1);                                                                                         \
-  lens[0] = sizeof(cmd) - 1;                                                                                           \
+  lens[0] = strlen(cmd);                                                                                               \
   lens[1] = RSTRING_LEN(arg1)
 #define CREATE_REDIS_COMMAND_ARG2(argv, lens, cmd, arg1, arg2)                                                         \
   argv[0] = cmd;                                                                                                       \
   argv[1] = RSTRING_PTR(arg1);                                                                                         \
   argv[2] = RSTRING_PTR(arg2);                                                                                         \
-  lens[0] = sizeof(cmd) - 1;                                                                                           \
+  lens[0] = strlen(cmd);                                                                                               \
   lens[1] = RSTRING_LEN(arg1);                                                                                         \
   lens[2] = RSTRING_LEN(arg2)
 #define CREATE_REDIS_COMMAND_ARG3(argv, lens, cmd, arg1, arg2, arg3)                                                   \
@@ -64,7 +64,7 @@
   argv[1] = RSTRING_PTR(arg1);                                                                                         \
   argv[2] = RSTRING_PTR(arg2);                                                                                         \
   argv[3] = RSTRING_PTR(arg3);                                                                                         \
-  lens[0] = sizeof(cmd) - 1;                                                                                           \
+  lens[0] = strlen(cmd);                                                                                               \
   lens[1] = RSTRING_LEN(arg1);                                                                                         \
   lens[2] = RSTRING_LEN(arg2);                                                                                         \
   lens[3] = RSTRING_LEN(arg3)
@@ -82,6 +82,22 @@ typedef struct ReplyHandlingRule {
   }
 
 static inline mrb_value mrb_redis_get_reply(redisReply *reply, mrb_state *mrb, const ReplyHandlingRule *rule);
+static inline int mrb_redis_create_command_noarg(mrb_state *mrb, const char *cmd, const char **argv, size_t *lens);
+static inline int mrb_redis_create_command_str(mrb_state *mrb, const char *cmd, const char **argv, size_t *lens);
+static inline int mrb_redis_create_command_int(mrb_state *mrb, const char *cmd, const char **argv, size_t *lens);
+static inline int mrb_redis_create_command_str_str(mrb_state *mrb, const char *cmd, const char **argv, size_t *lens);
+static inline int mrb_redis_create_command_str_int(mrb_state *mrb, const char *cmd, const char **argv, size_t *lens);
+static inline int mrb_redis_create_command_str_str_str(mrb_state *mrb, const char *cmd, const char **argv,
+                                                       size_t *lens);
+static inline int mrb_redis_create_command_str_str_int(mrb_state *mrb, const char *cmd, const char **argv,
+                                                       size_t *lens);
+static inline int mrb_redis_create_command_str_int_int(mrb_state *mrb, const char *cmd, const char **argv,
+                                                       size_t *lens);
+static inline int mrb_redis_create_command_str_float_str(mrb_state *mrb, const char *cmd, const char **argv,
+                                                         size_t *lens);
+static inline redisContext *mrb_redis_get_context(mrb_state *mrb, mrb_value self);
+static inline mrb_value mrb_redis_execute_command(mrb_state *mrb, mrb_value self, int argc, const char **argv,
+                                                  const size_t *lens, const ReplyHandlingRule *rule);
 
 static void redisContext_free(mrb_state *mrb, void *p)
 {
@@ -1966,6 +1982,106 @@ static mrb_value mrb_redis_setnx(mrb_state *mrb, mrb_value self)
   return mrb_bool_value(integer == 1);
 }
 
+static inline int mrb_redis_create_command_noarg(mrb_state *mrb, const char *cmd, const char **argv, size_t *lens)
+{
+  argv[0] = cmd;
+  lens[0] = strlen(cmd);
+  return 1;
+}
+static inline int mrb_redis_create_command_str(mrb_state *mrb, const char *cmd, const char **argv, size_t *lens)
+{
+  mrb_value str1;
+  mrb_get_args(mrb, "S", &str1);
+  CREATE_REDIS_COMMAND_ARG1(argv, lens, cmd, str1);
+  return 2;
+}
+static inline int mrb_redis_create_command_int(mrb_state *mrb, const char *cmd, const char **argv, size_t *lens)
+{
+  mrb_value str1;
+  mrb_int int1;
+  mrb_get_args(mrb, "i", &int1);
+  str1 = mrb_fixnum_to_str(mrb, mrb_fixnum_value(int1), 10);
+  CREATE_REDIS_COMMAND_ARG1(argv, lens, cmd, str1);
+  return 2;
+}
+static inline int mrb_redis_create_command_str_str(mrb_state *mrb, const char *cmd, const char **argv, size_t *lens)
+{
+  mrb_value str1, str2;
+  mrb_get_args(mrb, "SS", &str1, &str2);
+  CREATE_REDIS_COMMAND_ARG2(argv, lens, cmd, str1, str2);
+  return 3;
+}
+static inline int mrb_redis_create_command_str_int(mrb_state *mrb, const char *cmd, const char **argv, size_t *lens)
+{
+  mrb_value str1, str2;
+  mrb_int int2;
+  mrb_get_args(mrb, "Si", &str1, &int2);
+  str2 = mrb_fixnum_to_str(mrb, mrb_fixnum_value(int2), 10);
+  CREATE_REDIS_COMMAND_ARG2(argv, lens, cmd, str1, str2);
+  return 3;
+}
+static inline int mrb_redis_create_command_str_str_str(mrb_state *mrb, const char *cmd, const char **argv, size_t *lens)
+{
+  mrb_value str1, str2, str3;
+  mrb_get_args(mrb, "SSS", &str1, &str2, &str3);
+  CREATE_REDIS_COMMAND_ARG3(argv, lens, cmd, str1, str2, str3);
+  return 4;
+}
+static inline int mrb_redis_create_command_str_str_int(mrb_state *mrb, const char *cmd, const char **argv, size_t *lens)
+{
+  mrb_value str1, str2, str3;
+  mrb_int int3;
+  mrb_get_args(mrb, "SSi", &str1, &str2, &int3);
+  str3 = mrb_fixnum_to_str(mrb, mrb_fixnum_value(int3), 10);
+  CREATE_REDIS_COMMAND_ARG3(argv, lens, cmd, str1, str2, str3);
+  return 4;
+}
+static inline int mrb_redis_create_command_str_int_int(mrb_state *mrb, const char *cmd, const char **argv, size_t *lens)
+{
+  mrb_value str1, str2, str3;
+  mrb_int int2, int3;
+  mrb_get_args(mrb, "Sii", &str1, &int2, &int3);
+  str2 = mrb_fixnum_to_str(mrb, mrb_fixnum_value(int2), 10);
+  str3 = mrb_fixnum_to_str(mrb, mrb_fixnum_value(int3), 10);
+  CREATE_REDIS_COMMAND_ARG3(argv, lens, cmd, str1, str2, str3);
+  return 4;
+}
+static inline int mrb_redis_create_command_str_float_str(mrb_state *mrb, const char *cmd, const char **argv,
+                                                         size_t *lens)
+{
+  mrb_value str1, str2, str3;
+  mrb_float float2;
+  mrb_get_args(mrb, "SfS", &str1, &float2, &str3);
+  str2 = mrb_float_to_str(mrb, mrb_float_value(mrb, float2), "%g");
+  CREATE_REDIS_COMMAND_ARG3(argv, lens, cmd, str1, str2, str3);
+  return 4;
+}
+
+static inline redisContext *mrb_redis_get_context(mrb_state *mrb, mrb_value self)
+{
+  redisContext *context = DATA_PTR(self);
+  if (!context) {
+    mrb_raise(mrb, E_REDIS_ERR_CLOSED, "connection is already closed or not initialized yet.");
+  }
+  return context;
+}
+
+static inline mrb_value mrb_redis_execute_command(mrb_state *mrb, mrb_value self, int argc, const char **argv,
+                                                  const size_t *lens, const ReplyHandlingRule *rule)
+{
+  mrb_value ret;
+  redisReply *reply;
+  redisContext *context = mrb_redis_get_context(mrb, self);
+
+  reply = redisCommandArgv(context, argc, argv, lens);
+  if (!reply) {
+    mrb_raise(mrb, E_REDIS_ERROR, "could not read reply");
+  }
+
+  ret = mrb_redis_get_reply(reply, mrb, rule);
+  freeReplyObject(reply);
+  return ret;
+}
 
 void mrb_mruby_redis_gem_init(mrb_state *mrb)
 {
@@ -1979,6 +2095,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_class_under(mrb, redis, "ProtocolError", redis_error);
   mrb_define_class_under(mrb, redis, "OOMError", redis_error);
   mrb_define_class_under(mrb, redis, "AuthError", redis_error);
+  mrb_define_class_under(mrb, redis, "ClosedError", redis_error);
 
   mrb_define_method(mrb, redis, "initialize", mrb_redis_connect, MRB_ARGS_ANY());
 
