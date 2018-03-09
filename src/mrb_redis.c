@@ -69,7 +69,19 @@
   lens[2] = RSTRING_LEN(arg2);                                                                                         \
   lens[3] = RSTRING_LEN(arg3)
 
-static inline mrb_value mrb_redis_get_reply(redisReply *reply, mrb_state *mrb);
+typedef struct ReplyHandlingRule {
+  mrb_bool status_to_symbol;
+  mrb_bool integer_to_bool;
+  mrb_bool emptyarray_to_nil;
+  mrb_bool return_exception;
+} ReplyHandlingRule;
+
+#define DEFAULT_REPLY_HANDLING_RULE                                                                                    \
+  {                                                                                                                    \
+    .status_to_symbol = FALSE, .integer_to_bool = FALSE, .emptyarray_to_nil = FALSE, .return_exception = FALSE,        \
+  }
+
+static inline mrb_value mrb_redis_get_reply(redisReply *reply, mrb_state *mrb, const ReplyHandlingRule *rule);
 
 static void redisContext_free(mrb_state *mrb, void *p)
 {
@@ -1641,19 +1653,21 @@ static mrb_value mrb_redis_close(mrb_state *mrb, mrb_value self)
   return mrb_nil_value();
 }
 
-static inline mrb_value mrb_redis_get_ary_reply(redisReply *reply, mrb_state *mrb);
+static inline mrb_value mrb_redis_get_ary_reply(redisReply *reply, mrb_state *mrb, const ReplyHandlingRule *rule);
 
-static inline mrb_value mrb_redis_get_reply(redisReply *reply, mrb_state *mrb)
+static inline mrb_value mrb_redis_get_reply(redisReply *reply, mrb_state *mrb, const ReplyHandlingRule *rule)
 {
   switch (reply->type) {
   case REDIS_REPLY_STRING:
     return mrb_str_new(mrb, reply->str, reply->len);
     break;
   case REDIS_REPLY_ARRAY:
-    return mrb_redis_get_ary_reply(reply, mrb);
+    return mrb_redis_get_ary_reply(reply, mrb, rule);
     break;
   case REDIS_REPLY_INTEGER: {
-    if (FIXABLE(reply->integer))
+    if (rule->integer_to_bool)
+      return mrb_bool_value(reply->integer);
+    else if (FIXABLE(reply->integer))
       return mrb_fixnum_value(reply->integer);
     else
       return mrb_float_value(mrb, reply->integer);
@@ -1662,25 +1676,37 @@ static inline mrb_value mrb_redis_get_reply(redisReply *reply, mrb_state *mrb)
     return mrb_nil_value();
     break;
   case REDIS_REPLY_STATUS: {
-    mrb_sym status = mrb_intern(mrb, reply->str, reply->len);
-    return mrb_symbol_value(status);
+    if (rule->status_to_symbol) {
+      mrb_sym status = mrb_intern(mrb, reply->str, reply->len);
+      return mrb_symbol_value(status);
+    } else {
+      return mrb_str_new(mrb, reply->str, reply->len);
+    }
   } break;
   case REDIS_REPLY_ERROR: {
     mrb_value err = mrb_str_new(mrb, reply->str, reply->len);
-    return mrb_exc_new_str(mrb, E_REDIS_REPLY_ERROR, err);
+    mrb_value exc = mrb_exc_new_str(mrb, E_REDIS_REPLY_ERROR, err);
+    if (rule->return_exception) {
+      return exc;
+    } else {
+      mrb_exc_raise(mrb, exc);
+    }
   } break;
   default:
     mrb_raise(mrb, E_REDIS_ERROR, "unknown reply type");
   }
 }
 
-static inline mrb_value mrb_redis_get_ary_reply(redisReply *reply, mrb_state *mrb)
+static inline mrb_value mrb_redis_get_ary_reply(redisReply *reply, mrb_state *mrb, const ReplyHandlingRule *rule)
 {
+  if (rule->emptyarray_to_nil && reply->elements == 0) {
+    return mrb_nil_value();
+  }
   mrb_value ary = mrb_ary_new_capa(mrb, reply->elements);
   int ai = mrb_gc_arena_save(mrb);
   size_t element_couter;
   for (element_couter = 0; element_couter < reply->elements; element_couter++) {
-    mrb_value element = mrb_redis_get_reply(reply->element[element_couter], mrb);
+    mrb_value element = mrb_redis_get_reply(reply->element[element_couter], mrb, rule);
     mrb_ary_push(mrb, ary, element);
     mrb_gc_arena_restore(mrb, ai);
   }
@@ -1746,6 +1772,10 @@ static mrb_value mrb_redisGetReply(mrb_state *mrb, mrb_value self)
   redisContext *context;
   redisReply *reply = NULL;
   mrb_value reply_val;
+  ReplyHandlingRule rule = {
+      .status_to_symbol = TRUE,
+      .return_exception = TRUE,
+  };
   int rc;
 
   if (mrb_fixnum_p(queue_counter_val)) {
@@ -1763,7 +1793,7 @@ static mrb_value mrb_redisGetReply(mrb_state *mrb, mrb_value self)
     MRB_TRY(&c_jmp)
     {
       mrb->jmp = &c_jmp;
-      reply_val = mrb_redis_get_reply(reply, mrb);
+      reply_val = mrb_redis_get_reply(reply, mrb, &rule);
       if (queue_counter > 1) {
         mrb_iv_set(mrb, self, queue_counter_sym, mrb_fixnum_value(--queue_counter));
       } else {
