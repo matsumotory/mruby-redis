@@ -47,4 +47,6 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
 
   spec.add_dependency "mruby-sleep"
   spec.add_dependency "mruby-pointer", :github => 'matsumotory/mruby-pointer'
+  spec.add_test_dependency "mruby-open3"
+  spec.add_test_dependency "mruby-onig-regexp"
 end

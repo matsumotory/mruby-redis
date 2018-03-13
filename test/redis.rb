@@ -21,6 +21,21 @@ assert("Non-authrozied Redis#ping") do
   r.close
 end
 
+assert("Redis#enable_keepalive, Redis#keepalive") do
+  r = Redis.new HOST, PORT
+
+  assert_equal :off, r.keepalive
+  assert_nil r.enable_keepalive
+  assert_equal :on, r.keepalive
+
+  stdout, _, _ = Open3.capture3('lsof', '-a', '-cmrbtest', '-i:6379', '-Tf', '-FT')
+  assert_true /^TSO.*KEEPALIVE/ =~ stdout
+
+  r.close
+  assert_raise(Redis::ClosedError) {r.keepalive}
+  assert_raise(Redis::ClosedError) {r.enable_keepalive}
+end
+
 assert("Redis#host, Redis#port") do
   r = Redis.new HOST, PORT
 
