@@ -183,7 +183,27 @@ static mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
 
   DATA_PTR(self) = rc;
 
+  mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "keepalive"), mrb_symbol_value(mrb_intern_lit(mrb, "off")));
+
   return self;
+}
+
+static mrb_value mrb_redis_enable_keepalive(mrb_state *mrb, mrb_value self)
+{
+  redisContext *rc = mrb_redis_get_context(mrb, self);
+  errno = 0;
+  if (redisEnableKeepAlive(rc) == REDIS_OK) {
+    mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "keepalive"), mrb_symbol_value(mrb_intern_lit(mrb, "on")));
+  } else {
+    mrb_sys_fail(mrb, rc->errstr);
+  }
+  return mrb_nil_value();
+}
+
+static mrb_value mrb_redis_keepalive(mrb_state *mrb, mrb_value self)
+{
+  mrb_redis_get_context(mrb, self); // Check if closed
+  return mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "keepalive"));
 }
 
 static mrb_value mrb_redis_host(mrb_state *mrb, mrb_value self)
@@ -1438,6 +1458,8 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_class_method(mrb, redis, "connect_set_raw", mrb_redis_connect_set_raw, MRB_ARGS_ANY());
   mrb_define_class_method(mrb, redis, "connect_set_udptr", mrb_redis_connect_set_raw, MRB_ARGS_ANY());
 
+  mrb_define_method(mrb, redis, "enable_keepalive", mrb_redis_enable_keepalive, MRB_ARGS_NONE());
+  mrb_define_method(mrb, redis, "keepalive", mrb_redis_keepalive, MRB_ARGS_NONE());
   mrb_define_method(mrb, redis, "auth", mrb_redis_auth, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "select", mrb_redis_select, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "ping", mrb_redis_ping, MRB_ARGS_NONE());
