@@ -161,7 +161,7 @@ static mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
 
   redisContext *rc = (redisContext *)DATA_PTR(self);
   if (rc) {
-    mrb_free(mrb, rc);
+    redisFree(rc);
   }
   DATA_TYPE(self) = &redisContext_type;
   DATA_PTR(self) = NULL;
@@ -178,6 +178,7 @@ static mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
   }
 
   if (rc->err) {
+    redisFree(rc);
     mrb_raise(mrb, E_REDIS_ERROR, "redis connection failed.");
   }
 
@@ -729,7 +730,9 @@ static mrb_value mrb_redis_hmget(mrb_state *mrb, mrb_value self)
       }
     }
   } else {
-    mrb_raise(mrb, E_ARGUMENT_ERROR, rr->str);
+    mrb_value msg = mrb_str_new_cstr(mrb, rr->str);
+    freeReplyObject(rr);
+    mrb_raisef(mrb, E_ARGUMENT_ERROR, "%S", msg);
   }
 
   freeReplyObject(rr);
@@ -770,7 +773,9 @@ static mrb_value mrb_redis_hmset(mrb_state *mrb, mrb_value self)
   if (rr->type == REDIS_REPLY_STATUS && rr != NULL) {
     freeReplyObject(rr);
   } else {
-    mrb_raise(mrb, E_ARGUMENT_ERROR, rr->str);
+    mrb_value msg = mrb_str_new_cstr(mrb, rr->str);
+    freeReplyObject(rr);
+    mrb_raisef(mrb, E_ARGUMENT_ERROR, "%S", msg);
   }
 
   return self;
@@ -828,7 +833,9 @@ static mrb_value mrb_redis_mset(mrb_state *mrb, mrb_value self)
   if (rr->type == REDIS_REPLY_STATUS && rr != NULL) {
     freeReplyObject(rr);
   } else {
-    mrb_raise(mrb, E_ARGUMENT_ERROR, rr->str);
+    mrb_value msg = mrb_str_new_cstr(mrb, rr->str);
+    freeReplyObject(rr);
+    mrb_raisef(mrb, E_ARGUMENT_ERROR, "%S", msg);
   }
 
   return self;
@@ -881,7 +888,9 @@ static mrb_value mrb_redis_mget(mrb_state *mrb, mrb_value self)
       }
     }
   } else {
-    mrb_raise(mrb, E_ARGUMENT_ERROR, rr->str);
+    char const *msg = rr->str;
+    freeReplyObject(rr);
+    mrb_raise(mrb, E_ARGUMENT_ERROR, msg);
   }
 
   freeReplyObject(rr);
@@ -1111,10 +1120,12 @@ static inline mrb_value mrb_redis_get_reply(redisReply *reply, mrb_state *mrb, c
     if (rule->return_exception) {
       return exc;
     } else {
+      freeReplyObject(reply);
       mrb_exc_raise(mrb, exc);
     }
   } break;
   default:
+    freeReplyObject(reply);
     mrb_raise(mrb, E_REDIS_ERROR, "unknown reply type");
   }
 }
