@@ -30,7 +30,7 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
   if ! File.exists? "#{hiredis_dir}/libhiredis.a"
     Dir.chdir hiredis_dir do
       e = {
-        'CC' => "#{spec.build.cc.command} #{spec.build.cc.flags.join(' ')}",
+        'CC' => "#{spec.build.cc.command} #{spec.build.cc.flags.reject {|flag| flag == '-fPIE'}.join(' ')}",
         'CXX' => "#{spec.build.cxx.command} #{spec.build.cxx.flags.join(' ')}",
         'LD' => "#{spec.build.linker.command} #{spec.build.linker.flags.join(' ')}",
         'AR' => spec.build.archiver.command,
