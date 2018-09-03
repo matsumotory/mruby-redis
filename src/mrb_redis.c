@@ -330,7 +330,7 @@ static mrb_value mrb_redis_set(mrb_state *mrb, mrb_value self)
       c++;
     }
 
-    if (!mrb_bool(mrb_hash_empty_p(mrb, opt))) {
+    if (!mrb_hash_empty_p(mrb, opt)) {
       mrb_raisef(mrb, E_ARGUMENT_ERROR, "unknown option(s) specified %S (note: only string can be key, not the symbol",
                  mrb_hash_keys(mrb, opt));
     }
