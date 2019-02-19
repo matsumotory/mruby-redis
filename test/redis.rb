@@ -1414,3 +1414,22 @@ assert("Redis#auth") do
   assert_equal r.auth("secret"), "OK"
   assert_equal "PONG", r.ping
 end
+
+assert("Error handling") do
+  res = begin
+          raise Redis::ProtocolError
+        rescue Redis::ConnectionError
+          false
+        rescue Redis::ProtocolError
+          true
+        end
+  assert_true res
+  res = begin
+          raise Redis::ProtocolError
+        rescue Redis::ProtocolError
+          true
+        rescue Redis::ConnectionError
+          false
+        end
+  assert_true res
+end
