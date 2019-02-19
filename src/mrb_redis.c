@@ -1451,17 +1451,18 @@ static inline mrb_value mrb_redis_execute_command(mrb_state *mrb, mrb_value self
 
 void mrb_mruby_redis_gem_init(mrb_state *mrb)
 {
-  struct RClass *redis, *redis_error;
+  struct RClass *redis;
 
   redis = mrb_define_class(mrb, "Redis", mrb->object_class);
   MRB_SET_INSTANCE_TT(redis, MRB_TT_DATA);
 
-  redis_error = mrb_define_class_under(mrb, redis, "ConnectionError", E_RUNTIME_ERROR);
-  mrb_define_class_under(mrb, redis, "ReplyError", redis_error);
-  mrb_define_class_under(mrb, redis, "ProtocolError", redis_error);
-  mrb_define_class_under(mrb, redis, "OOMError", redis_error);
-  mrb_define_class_under(mrb, redis, "AuthError", redis_error);
-  mrb_define_class_under(mrb, redis, "ClosedError", redis_error);
+  mrb_define_class_under(mrb, redis, "ConnectionError", E_RUNTIME_ERROR);
+  mrb_define_class_under(mrb, redis, "ConnectionError", E_RUNTIME_ERROR);
+  mrb_define_class_under(mrb, redis, "ReplyError", E_RUNTIME_ERROR);
+  mrb_define_class_under(mrb, redis, "ProtocolError", E_RUNTIME_ERROR);
+  mrb_define_class_under(mrb, redis, "OOMError", E_RUNTIME_ERROR);
+  mrb_define_class_under(mrb, redis, "AuthError", E_RUNTIME_ERROR);
+  mrb_define_class_under(mrb, redis, "ClosedError", E_RUNTIME_ERROR);
 
   mrb_define_method(mrb, redis, "initialize", mrb_redis_connect, MRB_ARGS_ANY());
 
