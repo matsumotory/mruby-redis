@@ -53,6 +53,13 @@ client.keepalive                        # => :on
 client.auth "secret"
 ```
 
+#### `Redis#asking`
+
+```ruby
+client.asking
+```
+
+
 #### `Redis#[]=`
 
 TBD
@@ -72,6 +79,15 @@ TBD
 #### `Redis#close`
 
 TBD
+
+
+#### `Redis#cluster` [doc](http://redis.io/commands/cluster-info)
+
+```ruby
+client.cluster "info"
+client.cluster "nodes"
+client.cluster "slots"
+```
 
 
 #### `Redis#decr` [doc](http://redis.io/commands/decr)
