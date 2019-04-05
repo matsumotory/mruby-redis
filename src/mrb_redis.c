@@ -1348,6 +1348,24 @@ static mrb_value mrb_redis_setnx(mrb_state *mrb, mrb_value self)
   return mrb_redis_execute_command(mrb, self, argc, argv, lens, &rule);
 }
 
+static mrb_value mrb_redis_cluster(mrb_state *mrb, mrb_value self)
+{
+  const char *argv[2];
+  size_t lens[2];
+  int argc = mrb_redis_create_command_str(mrb, "CLUSTER", argv, lens);
+  ReplyHandlingRule rule = DEFAULT_REPLY_HANDLING_RULE;
+  return mrb_redis_execute_command(mrb, self, argc, argv, lens, &rule);
+}
+
+static mrb_value mrb_redis_asking(mrb_state *mrb, mrb_value self)
+{
+  const char *argv[1];
+  size_t lens[1];
+  int argc = mrb_redis_create_command_noarg(mrb, "ASKING", argv, lens);
+  ReplyHandlingRule rule = DEFAULT_REPLY_HANDLING_RULE;
+  return mrb_redis_execute_command(mrb, self, argc, argv, lens, &rule);
+}
+
 static inline int mrb_redis_create_command_noarg(mrb_state *mrb, const char *cmd, const char **argv, size_t *lens)
 {
   argv[0] = cmd;
@@ -1541,6 +1559,8 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_method(mrb, redis, "watch", mrb_redis_watch, (MRB_ARGS_REQ(1) | MRB_ARGS_REST()));
   mrb_define_method(mrb, redis, "unwatch", mrb_redis_unwatch, MRB_ARGS_NONE());
   mrb_define_method(mrb, redis, "setnx", mrb_redis_setnx, MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, redis, "cluster", mrb_redis_cluster, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, redis, "asking", mrb_redis_asking, MRB_ARGS_NONE());
   DONE;
 }
 

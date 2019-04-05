@@ -5,6 +5,8 @@
 HOST         = "127.0.0.1"
 PORT         = 6379
 SECURED_PORT = 6380
+CLUSTER_PORT = 7000
+NUM_OF_CLUSTER_NODES = 6
 
 assert("Redis#ping") do
   r = Redis.new HOST, PORT
@@ -1432,4 +1434,28 @@ assert("Error handling") do
           false
         end
   assert_true res
+end
+
+assert("Redis#asking") do
+  r = Redis.new HOST, CLUSTER_PORT
+  assert_equal "OK", r.asking
+  r.close
+  assert_raise(Redis::ClosedError) {r.asking}
+end
+
+assert("Redis#cluster") do
+  r = Redis.new HOST, CLUSTER_PORT
+  nodes = r.cluster "nodes"
+  slots = r.cluster "slots"
+
+  assert_kind_of(String, nodes)
+  assert_equal NUM_OF_CLUSTER_NODES, nodes.split("\n").length
+  assert_kind_of(Array, slots)
+  assert_equal NUM_OF_CLUSTER_NODES, slots.length
+
+  assert_raise(Redis::ArgumentError) {r.cluster}
+  assert_raise(TypeError) {r.cluster nil}
+
+  r.close
+  assert_raise(Redis::ClosedError) {r.cluster "info"}
 end
