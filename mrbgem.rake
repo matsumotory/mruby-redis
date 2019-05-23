@@ -36,9 +36,9 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
         'AR' => spec.build.archiver.command,
         'PREFIX' => hiredis_dir
       }
-
-      run_command e, "make"
-      run_command e, "make install"
+      make_command = `uname` =~ /BSD/ ? "gmake" : "make"
+      run_command e, "#{make_command}"
+      run_command e, "#{make_command} install"
     end
   end
 
