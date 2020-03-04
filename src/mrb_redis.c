@@ -1454,16 +1454,16 @@ static inline mrb_value mrb_redis_execute_command(mrb_state *mrb, mrb_value self
                                                   const size_t *lens, const ReplyHandlingRule *rule)
 {
   mrb_value ret;
-  redisReply *reply;
-  redisContext *context = mrb_redis_get_context(mrb, self);
+  redisReply *rr;
+  redisContext *rc = mrb_redis_get_context(mrb, self);
 
-  reply = redisCommandArgv(context, argc, argv, lens);
-  if (!reply) {
-    mrb_raise(mrb, E_REDIS_ERROR, "could not read reply");
+  rr = redisCommandArgv(rc, argc, argv, lens);
+  if (rc->err) {
+    mrb_redis_check_error(rc, mrb);
   }
 
-  ret = mrb_redis_get_reply(reply, mrb, rule);
-  freeReplyObject(reply);
+  ret = mrb_redis_get_reply(rr, mrb, rule);
+  freeReplyObject(rr);
   return ret;
 }
 
