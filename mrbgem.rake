@@ -18,7 +18,7 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
 
   FileUtils.mkdir_p build_dir
 
-  if ! File.exists? hiredis_dir
+  if ! File.exist? hiredis_dir
     Dir.chdir(build_dir) do
       e = {}
       run_command e, 'git clone https://github.com/redis/hiredis.git'
@@ -27,7 +27,7 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
     end
   end
 
-  if ! File.exists? "#{hiredis_dir}/libhiredis.a"
+  if ! File.exist? "#{hiredis_dir}/libhiredis.a"
     Dir.chdir hiredis_dir do
       e = {
         'CC' => "#{spec.build.cc.command} #{spec.build.cc.flags.reject {|flag| flag == '-fPIE'}.join(' ')}",
