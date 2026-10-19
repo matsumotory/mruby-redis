@@ -20,6 +20,12 @@ MRuby::Build.new do |conf|
   # adds. -Werror applies to the sources of this gem only, so that a warning
   # in them fails the build.
   conf.cc.flags << '-DMRB_GC_STRESS'
+  # NGX_MRUBY_CFLAGS and NGX_MRUBY_LDFLAGS are added the way the
+  # build_config.rb of ngx_mruby adds them. The sanitizer job of the CI of
+  # ngx_mruby sets them to -fsanitize=address,undefined, and CI sets them the
+  # same way. The C flags of the mruby build also reach hiredis.
+  conf.cc.flags << ENV['NGX_MRUBY_CFLAGS'] if ENV['NGX_MRUBY_CFLAGS']
+  conf.linker.flags << ENV['NGX_MRUBY_LDFLAGS'] if ENV['NGX_MRUBY_LDFLAGS']
   conf.gem File.expand_path(File.dirname(__FILE__)) do |g|
     g.cc.flags << '-Werror'
   end

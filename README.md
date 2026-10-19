@@ -30,7 +30,10 @@ MRuby::Build.new do |conf|
 end
 ```
 
-CI builds and tests this gem with mruby 3.3.0 and 4.0.0, with gcc and clang.
+CI builds and tests this gem with mruby 3.3.0 and 4.0.0: with gcc and clang
+on Ubuntu 22.04, and with gcc 13 on Ubuntu 24.04 under AddressSanitizer and
+UndefinedBehaviorSanitizer, with the flags of the sanitizer job of
+ngx_mruby's CI.
 
 #### hiredis
 

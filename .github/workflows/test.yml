@@ -15,12 +15,16 @@ defaults:
 
 jobs:
   test:
-    # The runner that ngx_mruby's CI builds on (gcc 11).
-    runs-on: ubuntu-22.04
+    name: test (${{ matrix.os }}, ${{ matrix.mruby }}, ${{ matrix.cc }}${{ matrix.sanitizer != '' && format(', {0}', matrix.sanitizer) || '' }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
+        # ubuntu-22.04 is the runner that ngx_mruby's CI builds on (gcc 11,
+        # clang 14).
+        os:
+          - ubuntu-22.04
         # mruby 3.3.0 is the mruby of ngx_mruby 2.x, 4.0.0 that of its next branch.
         mruby:
           - 3.3.0
@@ -28,6 +32,20 @@ jobs:
         cc:
           - gcc
           - clang
+        sanitizer:
+          - ''
+        # A newer gcc (13 on ubuntu-24.04) with the flags of the sanitizer job
+        # of ngx_mruby's CI. The mruby build passes its C flags to hiredis, and
+        # hiredis prints more warnings with a newer gcc and these flags.
+        include:
+          - os: ubuntu-24.04
+            mruby: 3.3.0
+            cc: gcc
+            sanitizer: address,undefined
+          - os: ubuntu-24.04
+            mruby: 4.0.0
+            cc: gcc
+            sanitizer: address,undefined
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install packages
@@ -63,4 +81,20 @@ jobs:
           MRUBY_VERSION: ${{ matrix.mruby }}
           CC: ${{ matrix.cc }}
           LD: ${{ matrix.cc }}
-        run: rake test
+          SANITIZER: ${{ matrix.sanitizer }}
+        run: |
+          if [ -n "$SANITIZER" ]; then
+            # The settings of the sanitizer job of ngx_mruby's CI.
+            # build_config.rb adds NGX_MRUBY_CFLAGS and NGX_MRUBY_LDFLAGS to
+            # the mruby build. ASan's shadow memory layout fails with the high
+            # mmap ASLR entropy of some runner kernels; 28 bits is what ASan
+            # expects.
+            sudo sysctl -w vm.mmap_rnd_bits=28
+            export NGX_MRUBY_CFLAGS="-fsanitize=${SANITIZER} -fno-omit-frame-pointer"
+            export NGX_MRUBY_LDFLAGS="-fsanitize=${SANITIZER}"
+            export ASAN_OPTIONS="detect_leaks=1"
+            # UBSan only prints its reports; halt_on_error=1 makes the first
+            # report stop the process, so that it fails the build or the test.
+            export UBSAN_OPTIONS="print_stacktrace=1:halt_on_error=1"
+          fi
+          rake test
