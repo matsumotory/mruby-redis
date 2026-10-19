@@ -1,4 +1,4 @@
-# mruby-redis [![Build Status](https://travis-ci.org/matsumotory/mruby-redis.svg?branch=master)](https://travis-ci.org/matsumotory/mruby-redis)
+# mruby-redis [![test](https://github.com/matsumotory/mruby-redis/actions/workflows/test.yml/badge.svg)](https://github.com/matsumotory/mruby-redis/actions/workflows/test.yml)
 
 [Hiredis](https://github.com/redis/hiredis) binding for mruby. Hiredis is a
 minimalistic C client library for the Redis database. Redis is an open source,
@@ -29,6 +29,55 @@ MRuby::Build.new do |conf|
     conf.gem :git => 'https://github.com/matsumoto-r/mruby-redis.git'
 end
 ```
+
+CI builds and tests this gem with mruby 3.3.0 and 4.0.0: with gcc and clang
+on Ubuntu 22.04, and with gcc 13 on Ubuntu 24.04 under AddressSanitizer and
+UndefinedBehaviorSanitizer, with the flags of the sanitizer job of
+ngx_mruby's CI.
+
+#### hiredis
+
+The build of this gem clones [hiredis](https://github.com/redis/hiredis) at a
+release tag, currently **v1.5.0**, and links it statically. For this tag, the
+build also checks that the clone is at commit
+`5bb7f030f6631b243438cf0fdd3be84352b905bb`, the commit that the tag points to,
+and stops otherwise. Neither a new commit on the default branch of hiredis nor
+a moved tag changes the build.
+
+To build with another hiredis tag, set `MRUBY_REDIS_HIREDIS_VERSION`, either in
+the environment of `rake`:
+
+```sh
+MRUBY_REDIS_HIREDIS_VERSION=v1.4.1 rake
+```
+
+or in the build configuration:
+
+```ruby
+MRuby::Build.new do |conf|
+    ENV['MRUBY_REDIS_HIREDIS_VERSION'] = 'v1.4.1'
+    conf.gem :github => 'matsumotory/mruby-redis'
+end
+```
+
+This gem reads the variable when mruby sets up the gems, after mruby has
+loaded the whole build configuration. The place of the assignment in the file
+therefore does not matter, and the value applies to every `MRuby::Build` of
+the `rake` run: with several assignments, the last one applies to all builds.
+
+hiredis is cloned into `hiredis-<tag>` in the build directory of this gem, so
+another tag is cloned and built again. The build does not check the commit of
+another tag, and CI tests only the default tag.
+
+hiredis is compiled with the C flags of the mruby build, and its Makefile
+adds `-Werror` (hiredis 1.2.0 and later). Those flags and newer compilers
+bring warnings that would then stop the build: the `-Wundef` of mruby's gcc
+toolchain warns about `#if FFC_DEBUG` in `ffc.h` (hiredis 1.4.0 and later),
+and gcc 13 to 15 warn about `sds.c` under `-fsanitize=address,undefined`.
+This gem therefore builds hiredis with `USE_WERROR=0`, the switch that
+hiredis 1.3.0 and later provide for builds that do not want `-Werror`. The
+build prints those warnings and goes on. The sources of this gem itself are
+compiled with the flags of the mruby build, without this switch.
 
 
 ## USAGE

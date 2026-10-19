@@ -1,0 +1,100 @@
+name: test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test:
+    name: test (${{ matrix.os }}, ${{ matrix.mruby }}, ${{ matrix.cc }}${{ matrix.sanitizer != '' && format(', {0}', matrix.sanitizer) || '' }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        # ubuntu-22.04 is the runner that ngx_mruby's CI builds on (gcc 11,
+        # clang 14).
+        os:
+          - ubuntu-22.04
+        # mruby 3.3.0 is the mruby of ngx_mruby 2.x, 4.0.0 that of its next branch.
+        mruby:
+          - 3.3.0
+          - 4.0.0
+        cc:
+          - gcc
+          - clang
+        sanitizer:
+          - ''
+        # A newer gcc (13 on ubuntu-24.04) with the flags of the sanitizer job
+        # of ngx_mruby's CI. The mruby build passes its C flags to hiredis, and
+        # hiredis prints more warnings with a newer gcc and these flags.
+        include:
+          - os: ubuntu-24.04
+            mruby: 3.3.0
+            cc: gcc
+            sanitizer: address,undefined
+          - os: ubuntu-24.04
+            mruby: 4.0.0
+            cc: gcc
+            sanitizer: address,undefined
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install packages
+        run: |
+          sudo apt-get -qq update
+          sudo apt-get -qq install rake bison gperf clang redis-server redis-tools
+          # The package starts a redis-server on port 6379; the tests start their own.
+          sudo systemctl stop redis-server || true
+      - name: Start Redis servers
+        # test/redis.rb connects to 6379, to 6380 (password "secret") and to
+        # a cluster of six nodes on 7000 to 7005.
+        run: |
+          mkdir -p "$RUNNER_TEMP/redis" && cd "$RUNNER_TEMP/redis"
+          redis-server --port 6379 --daemonize yes --save '' --appendonly no
+          redis-server --port 6380 --requirepass secret --daemonize yes --save '' --appendonly no
+          for port in 7000 7001 7002 7003 7004 7005; do
+            redis-server --port "$port" --cluster-enabled yes --cluster-config-file "$port-nodes.conf" --daemonize yes --save '' --appendonly no
+          done
+          for port in 6379 6380 7000 7001 7002 7003 7004 7005; do
+            for i in $(seq 1 50); do
+              redis-cli -p "$port" ping 2>/dev/null | grep -q -E 'PONG|NOAUTH' && break
+              sleep 0.1
+            done
+          done
+          echo yes | redis-cli --cluster create 127.0.0.1:7000 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005
+          for i in $(seq 1 100); do
+            redis-cli -p 7000 cluster info | grep -q 'cluster_state:ok' && break
+            sleep 0.1
+          done
+          redis-cli -p 7000 cluster info | grep 'cluster_state:ok'
+      - name: Test
+        env:
+          MRUBY_VERSION: ${{ matrix.mruby }}
+          CC: ${{ matrix.cc }}
+          LD: ${{ matrix.cc }}
+          SANITIZER: ${{ matrix.sanitizer }}
+        run: |
+          if [ -n "$SANITIZER" ]; then
+            # The settings of the sanitizer job of ngx_mruby's CI.
+            # build_config.rb adds NGX_MRUBY_CFLAGS and NGX_MRUBY_LDFLAGS to
+            # the mruby build. ASan's shadow memory layout fails with the high
+            # mmap ASLR entropy of some runner kernels; 28 bits is what ASan
+            # expects.
+            sudo sysctl -w vm.mmap_rnd_bits=28
+            export NGX_MRUBY_CFLAGS="-fsanitize=${SANITIZER} -fno-omit-frame-pointer"
+            export NGX_MRUBY_LDFLAGS="-fsanitize=${SANITIZER}"
+            export ASAN_OPTIONS="detect_leaks=1"
+            # UBSan only prints its reports; halt_on_error=1 makes the first
+            # report stop the process, so that it fails the build or the test.
+            export UBSAN_OPTIONS="print_stacktrace=1:halt_on_error=1"
+          fi
+          rake test

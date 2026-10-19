@@ -1,12 +1,9 @@
 MRUBY_CONFIG=File.expand_path(ENV["MRUBY_CONFIG"] || "build_config.rb")
-MRUBY_VERSION=ENV["MRUBY_VERSION"] || "1.1.0"
+# The mruby release (a tag of mruby/mruby) that `rake test` builds against.
+MRUBY_VERSION=ENV["MRUBY_VERSION"] || "3.3.0"
 
 file :mruby do
-  #sh "wget -O mruby.tar.gz https://github.com/mruby/mruby/archive/#{MRUBY_VERSION}.tar.gz"
-  #sh "tar -xvzf mruby.tar.gz"
-  #sh "rm mruby.tar.gz"
-  #sh "mv mruby-#{MRUBY_VERSION} mruby"
-  sh "git clone --depth=1 git://github.com/mruby/mruby.git"
+  sh "git clone --depth 1 --branch #{MRUBY_VERSION} https://github.com/mruby/mruby.git mruby"
 end
 
 desc "compile binary"
