@@ -1453,7 +1453,7 @@ assert("Redis#cluster") do
   assert_kind_of(Array, slots)
   assert_equal NUM_OF_CLUSTER_NODES, slots.length
 
-  assert_raise(Redis::ArgumentError) {r.cluster}
+  assert_raise(ArgumentError) {r.cluster}
   assert_raise(TypeError) {r.cluster nil}
 
   r.close
