@@ -35,18 +35,21 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
 
   if ! File.exist? "#{hiredis_dir}/libhiredis.a"
     Dir.chdir hiredis_dir do
-      # hiredis is compiled with the flags of the mruby build, and its
-      # Makefile adds -Werror (USE_WERROR=1 by default). The gcc toolchain of
-      # mruby passes -Wundef, and ffc.h of hiredis 1.4.0 and later tests the
-      # undefined macro FFC_DEBUG with #if, so that warning would stop the
-      # build. -Wno-error=undef keeps it a warning, for hiredis only.
-      cflags = spec.build.cc.flags.flatten.reject {|flag| flag == '-fPIE'} + ['-Wno-error=undef']
+      # hiredis is compiled with the C flags of the mruby build, and its
+      # Makefile adds -Werror. Those flags and newer compilers bring warnings
+      # that would then stop the build: the gcc toolchain of mruby passes
+      # -Wundef, which warns about "#if FFC_DEBUG" in ffc.h (hiredis 1.4.0 and
+      # later), and gcc 13 to 15 warn about sds.c under
+      # -fsanitize=address,undefined. USE_WERROR=0 (hiredis 1.3.0 and later)
+      # turns -Werror off; the warnings are still printed.
+      cflags = spec.build.cc.flags.flatten.reject {|flag| flag == '-fPIE'}
       e = {
         'CC' => "#{spec.build.cc.command} #{cflags.join(' ')}",
         'CXX' => "#{spec.build.cxx.command} #{spec.build.cxx.flags.join(' ')}",
         'LD' => "#{spec.build.linker.command} #{spec.build.linker.flags.join(' ')}",
         'AR' => spec.build.archiver.command,
-        'PREFIX' => hiredis_dir
+        'PREFIX' => hiredis_dir,
+        'USE_WERROR' => '0'
       }
       make_command = `uname` =~ /BSD/ ? "gmake" : "make"
       run_command e, "#{make_command}"

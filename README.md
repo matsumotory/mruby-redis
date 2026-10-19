@@ -60,11 +60,15 @@ end
 hiredis is cloned into `hiredis-<tag>` in the build directory of this gem, so
 another tag is cloned and built again. CI tests only the default tag.
 
-hiredis compiles with `-Werror` by default, and it is compiled with the C
-flags of the mruby build. The gcc toolchain of mruby passes `-Wundef`, which
-warns about `#if FFC_DEBUG` in `ffc.h` of hiredis 1.4.0 and later, so this gem
-adds `-Wno-error=undef` to the flags of the hiredis build. The build prints
-that warning and goes on.
+hiredis is compiled with the C flags of the mruby build, and its Makefile
+adds `-Werror` (hiredis 1.2.0 and later). Those flags and newer compilers
+bring warnings that would then stop the build: the `-Wundef` of mruby's gcc
+toolchain warns about `#if FFC_DEBUG` in `ffc.h` (hiredis 1.4.0 and later),
+and gcc 13 to 15 warn about `sds.c` under `-fsanitize=address,undefined`.
+This gem therefore builds hiredis with `USE_WERROR=0`, the switch that
+hiredis 1.3.0 and later provide for builds that do not want `-Werror`. The
+build prints those warnings and goes on. The sources of this gem itself are
+compiled with the flags of the mruby build, without this switch.
 
 
 ## USAGE
