@@ -1537,7 +1537,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
   mrb_define_method(mrb, redis, "hmget", mrb_redis_hmget, (MRB_ARGS_REQ(2) | MRB_ARGS_REST()));
   mrb_define_method(mrb, redis, "hvals", mrb_redis_hvals, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "hincrby", mrb_redis_hincrby, MRB_ARGS_REQ(3));
-  mrb_define_method(mrb, redis, "ttl", mrb_redis_ttl, MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, redis, "ttl", mrb_redis_ttl, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "zadd", mrb_redis_zadd, MRB_ARGS_REQ(3));
   mrb_define_method(mrb, redis, "zcard", mrb_redis_zcard, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, redis, "zrange", mrb_redis_zrange, MRB_ARGS_REQ(3));
