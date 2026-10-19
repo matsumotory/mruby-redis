@@ -38,8 +38,11 @@ ngx_mruby's CI.
 #### hiredis
 
 The build of this gem clones [hiredis](https://github.com/redis/hiredis) at a
-release tag, currently **v1.5.0**, and links it statically. A new commit on the
-default branch of hiredis does not change the build.
+release tag, currently **v1.5.0**, and links it statically. For this tag, the
+build also checks that the clone is at commit
+`5bb7f030f6631b243438cf0fdd3be84352b905bb`, the commit that the tag points to,
+and stops otherwise. Neither a new commit on the default branch of hiredis nor
+a moved tag changes the build.
 
 To build with another hiredis tag, set `MRUBY_REDIS_HIREDIS_VERSION`, either in
 the environment of `rake`:
@@ -58,7 +61,8 @@ end
 ```
 
 hiredis is cloned into `hiredis-<tag>` in the build directory of this gem, so
-another tag is cloned and built again. CI tests only the default tag.
+another tag is cloned and built again. The build does not check the commit of
+another tag, and CI tests only the default tag.
 
 hiredis is compiled with the C flags of the mruby build, and its Makefile
 adds `-Werror` (hiredis 1.2.0 and later). Those flags and newer compilers

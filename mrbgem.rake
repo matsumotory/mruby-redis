@@ -5,12 +5,15 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
   # for expire test
   require 'open3'
 
-  # The hiredis release that this gem is built and tested with. The build
-  # clones this tag, so a new commit on the default branch of hiredis cannot
-  # change or break the build. To build with another hiredis tag, set
-  # MRUBY_REDIS_HIREDIS_VERSION in the environment of rake, or in the build
-  # configuration before the conf.gem line (see README.md).
-  hiredis_version = ENV['MRUBY_REDIS_HIREDIS_VERSION'] || 'v1.5.0'
+  # The hiredis release that this gem is built and tested with, and the
+  # commit that its tag points to. The build clones the tag and checks that
+  # it got this commit, so neither a new commit on the default branch of
+  # hiredis nor a moved tag can change the build. To build with another
+  # hiredis tag, set MRUBY_REDIS_HIREDIS_VERSION (see README.md); the commit
+  # of another tag is not checked.
+  hiredis_default_version = 'v1.5.0'
+  hiredis_default_commit = '5bb7f030f6631b243438cf0fdd3be84352b905bb'
+  hiredis_version = ENV['MRUBY_REDIS_HIREDIS_VERSION'] || hiredis_default_version
   unless hiredis_version =~ /\A[A-Za-z0-9][A-Za-z0-9._-]*\z/
     fail "mruby-redis: MRUBY_REDIS_HIREDIS_VERSION must be a hiredis tag such as v1.5.0, not #{hiredis_version.inspect}"
   end
@@ -31,6 +34,24 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
 
   if ! File.exist? hiredis_dir
     run_command({}, "git clone --depth 1 --branch #{hiredis_version} https://github.com/redis/hiredis.git #{hiredis_dir}")
+  end
+
+  # "git clone --branch" follows a tag that has been moved, and it takes a
+  # branch of the same name before the tag. The check runs every time rake
+  # sets up this gem, also when hiredis is built already, so that a
+  # directory at another commit is neither built nor linked. --git-dir
+  # keeps git from using a repository above the directory (such as the
+  # mruby checkout) when the directory has no .git.
+  if hiredis_version == hiredis_default_version
+    head, status = Open3.capture2('git', "--git-dir=#{hiredis_dir}/.git", 'rev-parse', 'HEAD')
+    head = head.strip
+    unless status.success? && head == hiredis_default_commit
+      found = head.empty? ? 'git finds no commit there' : "it is at #{head}"
+      fail "mruby-redis: #{hiredis_dir} should be hiredis #{hiredis_default_version} at " \
+           "commit #{hiredis_default_commit}, but #{found}. The tag, or a branch of the " \
+           "same name, may point elsewhere now. Remove the directory to clone it again, " \
+           "or set MRUBY_REDIS_HIREDIS_VERSION to build another tag."
+    end
   end
 
   if ! File.exist? "#{hiredis_dir}/libhiredis.a"
