@@ -52,7 +52,12 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
         'USE_WERROR' => '0'
       }
       make_command = `uname` =~ /BSD/ ? "gmake" : "make"
-      run_command e, "#{make_command}"
+      # The install target builds what it installs: the static and the
+      # shared library and the pkg-config file. A bare make builds the all
+      # target, which also compiles test.c into hiredis-test, and test.c of
+      # hiredis 1.5.0 includes <linux/errqueue.h>, a Linux kernel header that
+      # musl systems such as Alpine have only with linux-headers. The gem
+      # links only lib/libhiredis.a.
       run_command e, "#{make_command} install"
     end
   end
