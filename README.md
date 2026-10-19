@@ -94,6 +94,32 @@ client.enable_keepalive                 # Turn on TCP keepalive if needed
 client.keepalive                        # => :on
 ```
 
+### Keeping a connection for a later `Redis.new`
+
+```ruby
+Redis.connect_set_udptr "127.0.0.1", 6379, 2 # Connect, and keep the connection
+client = Redis.new                           # Take the kept connection
+client.ping                                  # => "PONG"
+```
+
+`Redis.connect_set_udptr host, port[, timeout]`, also named
+`Redis.connect_set_raw`, connects to the server and keeps the connection in
+the current `mrb_state`. It raises `Redis::ConnectionError` when the
+connection fails. A connection that it kept before and that no `Redis.new`
+has taken yet is closed and replaced.
+
+`Redis.new` without arguments takes the kept connection: the new object is
+the only owner of the connection, and a later `Redis.new` without arguments
+raises `Redis::ConnectionError` until `Redis.connect_set_udptr` is called
+again. It raises the same error when no connection is kept.
+
+The gem keeps this connection in the `mrb_state` itself and does not use
+`mrb->ud`, the user-data pointer of `mrb_state`, which belongs to the
+application that embeds mruby. A connection kept in one `mrb_state` cannot be
+taken from another `mrb_state`.
+
+`Redis.new` with one argument raises `ArgumentError`.
+
 ### Commands
 
 #### `Redis#auth` [doc](http://redis.io/commands/auth)
