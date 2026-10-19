@@ -111,8 +111,9 @@ static const struct mrb_data_type redisContext_type = {
  * Redis.connect_set_udptr keeps its connection in this struct until
  * Redis.new without arguments takes it. The struct is the data of an object
  * in an instance variable of the Redis class whose name has no "@", so that
- * Ruby code cannot reach it, and each mrb_state has its own. The gem does not
- * use mrb->ud, which belongs to the application that embeds mruby.
+ * Ruby code cannot read or replace it, and each mrb_state has its own. The
+ * gem does not use mrb->ud, which belongs to the application that embeds
+ * mruby.
  */
 typedef struct {
   redisContext *rc;

@@ -1538,3 +1538,32 @@ assert("Redis.new with one argument") do
   assert_equal "PONG", r.ping
   r.close
 end
+
+assert("Redis.connect_set_udptr replaces a connection that no Redis.new has taken") do
+  HostUserData.clear
+  Redis.connect_set_udptr HOST, PORT
+  Redis.connect_set_udptr HOST, SECURED_PORT
+  r = Redis.new
+  assert_equal SECURED_PORT, r.port
+  assert_raise(Redis::ConnectionError) {Redis.new}
+  r.close
+end
+
+assert("A failed Redis.connect_set_udptr keeps the connection kept before") do
+  HostUserData.clear
+  Redis.connect_set_udptr HOST, PORT
+  assert_raise(Redis::ConnectionError) {Redis.connect_set_udptr HOST, 1}
+  r = Redis.new
+  assert_equal PORT, r.port
+  assert_equal "PONG", r.ping
+  r.close
+end
+
+# Leaves a kept connection that no Redis.new takes: closing the mrb_state
+# closes it (with the sanitizer settings of CI, LeakSanitizer reports it
+# otherwise).
+assert("Redis.connect_set_udptr with a connection that is never taken") do
+  HostUserData.clear
+  Redis.connect_set_udptr HOST, PORT
+  assert_true HostUserData.null?
+end

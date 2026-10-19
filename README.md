@@ -104,14 +104,18 @@ client.ping                                  # => "PONG"
 
 `Redis.connect_set_udptr host, port[, timeout]`, also named
 `Redis.connect_set_raw`, connects to the server and keeps the connection in
-the current `mrb_state`. It raises `Redis::ConnectionError` when the
-connection fails. A connection that it kept before and that no `Redis.new`
-has taken yet is closed and replaced.
+the current `mrb_state`. When it connects, a connection that it kept before
+and that no `Redis.new` has taken yet is closed and replaced. When the
+connection fails, it raises `Redis::ConnectionError` and a connection kept
+before stays kept. A kept connection that no `Redis.new` takes is closed
+when the `mrb_state` is closed.
 
 `Redis.new` without arguments takes the kept connection: the new object is
 the only owner of the connection, and a later `Redis.new` without arguments
-raises `Redis::ConnectionError` until `Redis.connect_set_udptr` is called
+raises `Redis::ConnectionError` ("no connection kept: call
+Redis.connect_set_udptr first") until `Redis.connect_set_udptr` is called
 again. It raises the same error when no connection is kept.
+`Redis::ConnectionError` is a subclass of `RuntimeError`.
 
 The gem keeps this connection in the `mrb_state` itself and does not use
 `mrb->ud`, the user-data pointer of `mrb_state`, which belongs to the
