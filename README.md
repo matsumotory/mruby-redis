@@ -51,7 +51,7 @@ the environment of `rake`:
 MRUBY_REDIS_HIREDIS_VERSION=v1.4.1 rake
 ```
 
-or in the build configuration, before the `conf.gem` line:
+or in the build configuration:
 
 ```ruby
 MRuby::Build.new do |conf|
@@ -59,6 +59,11 @@ MRuby::Build.new do |conf|
     conf.gem :github => 'matsumotory/mruby-redis'
 end
 ```
+
+This gem reads the variable when mruby sets up the gems, after mruby has
+loaded the whole build configuration. The place of the assignment in the file
+therefore does not matter, and the value applies to every `MRuby::Build` of
+the `rake` run: with several assignments, the last one applies to all builds.
 
 hiredis is cloned into `hiredis-<tag>` in the build directory of this gem, so
 another tag is cloned and built again. The build does not check the commit of
