@@ -1,4 +1,4 @@
-# mruby-redis [![Build Status](https://travis-ci.org/matsumotory/mruby-redis.svg?branch=master)](https://travis-ci.org/matsumotory/mruby-redis)
+# mruby-redis [![test](https://github.com/matsumotory/mruby-redis/actions/workflows/test.yml/badge.svg)](https://github.com/matsumotory/mruby-redis/actions/workflows/test.yml)
 
 [Hiredis](https://github.com/redis/hiredis) binding for mruby. Hiredis is a
 minimalistic C client library for the Redis database. Redis is an open source,
@@ -29,6 +29,39 @@ MRuby::Build.new do |conf|
     conf.gem :git => 'https://github.com/matsumoto-r/mruby-redis.git'
 end
 ```
+
+CI builds and tests this gem with mruby 3.3.0 and 4.0.0, with gcc and clang.
+
+#### hiredis
+
+The build of this gem clones [hiredis](https://github.com/redis/hiredis) at a
+release tag, currently **v1.5.0**, and links it statically. A new commit on the
+default branch of hiredis does not change the build.
+
+To build with another hiredis tag, set `MRUBY_REDIS_HIREDIS_VERSION`, either in
+the environment of `rake`:
+
+```sh
+MRUBY_REDIS_HIREDIS_VERSION=v1.4.1 rake
+```
+
+or in the build configuration, before the `conf.gem` line:
+
+```ruby
+MRuby::Build.new do |conf|
+    ENV['MRUBY_REDIS_HIREDIS_VERSION'] = 'v1.4.1'
+    conf.gem :github => 'matsumotory/mruby-redis'
+end
+```
+
+hiredis is cloned into `hiredis-<tag>` in the build directory of this gem, so
+another tag is cloned and built again. CI tests only the default tag.
+
+hiredis compiles with `-Werror` by default, and it is compiled with the C
+flags of the mruby build. The gcc toolchain of mruby passes `-Wundef`, which
+warns about `#if FFC_DEBUG` in `ffc.h` of hiredis 1.4.0 and later, so this gem
+adds `-Wno-error=undef` to the flags of the hiredis build. The build prints
+that warning and goes on.
 
 
 ## USAGE

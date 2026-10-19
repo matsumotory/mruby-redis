@@ -11,10 +11,18 @@ MRuby::Build.new do |conf|
   # conf.gem :github => 'masuidrive/mrbgems-example', :branch => 'master'
   # conf.gem :git => 'git@github.com:masuidrive/mrbgems-example.git', :branch => 'master', :options => '-v'
 
-  # include the default GEMs
+  # include the default GEMs (mruby-sleep, which this gem needs, is one of
+  # the core gems of mruby)
   conf.gembox 'default'
-  conf.gem File.expand_path(File.dirname(__FILE__))
-  conf.gem :github => 'matsumoto-r/mruby-sleep'
+
+  # Compile the way ngx_mruby compiles mrbgems: with the flags of the gcc
+  # toolchain of mruby and -DMRB_GC_STRESS, which the test.sh of ngx_mruby
+  # adds. -Werror applies to the sources of this gem only, so that a warning
+  # in them fails the build.
+  conf.cc.flags << '-DMRB_GC_STRESS'
+  conf.gem File.expand_path(File.dirname(__FILE__)) do |g|
+    g.cc.flags << '-Werror'
+  end
   conf.enable_test
 
   # C compiler settings
