@@ -1459,3 +1459,82 @@ assert("Redis#cluster") do
   r.close
   assert_raise(Redis::ClosedError) {r.cluster "info"}
 end
+
+# Redis.connect_set_udptr (and its alias connect_set_raw) connects and keeps
+# the connection; Redis.new without arguments takes it. The gem keeps the
+# connection in the mrb_state, not in mrb->ud, which belongs to the host
+# application (HostUserData, in test/host_ud.c, sets it the way a host does).
+
+assert("Redis.connect_set_udptr and Redis.new without arguments") do
+  HostUserData.clear
+  Redis.connect_set_udptr HOST, PORT
+  assert_true HostUserData.null?
+  r = Redis.new
+  assert_equal "PONG", r.ping
+  assert_equal PORT, r.port
+  r.close
+end
+
+assert("Redis.connect_set_udptr leaves mrb->ud of the host unchanged") do
+  HostUserData.set
+  begin
+    Redis.connect_set_udptr HOST, PORT
+    assert_true HostUserData.intact?
+    r = Redis.new
+    assert_true HostUserData.intact?
+    assert_equal "PONG", r.ping
+    r.close
+  ensure
+    HostUserData.clear
+  end
+end
+
+assert("Redis.connect_set_raw is the same method") do
+  HostUserData.clear
+  Redis.connect_set_raw HOST, PORT, 2
+  r = Redis.new
+  assert_equal "PONG", r.ping
+  r.close
+end
+
+assert("Redis.connect_set_udptr with a server that does not answer") do
+  HostUserData.set
+  begin
+    assert_raise(Redis::ConnectionError) {Redis.connect_set_udptr HOST, 1}
+    assert_true HostUserData.intact?
+  ensure
+    HostUserData.clear
+  end
+end
+
+assert("Redis.new without arguments takes the connection once") do
+  HostUserData.clear
+  Redis.connect_set_udptr HOST, PORT
+  r = Redis.new
+  assert_raise(Redis::ConnectionError) {Redis.new}
+  assert_equal "PONG", r.ping
+  r.close
+end
+
+assert("Redis.new without arguments and no connection set") do
+  HostUserData.clear
+  assert_raise(Redis::ConnectionError) {Redis.new}
+end
+
+assert("Redis.new without arguments and no connection set leaves mrb->ud of the host unchanged") do
+  HostUserData.set
+  begin
+    assert_raise(Redis::ConnectionError) {Redis.new}
+    assert_true HostUserData.intact?
+  ensure
+    HostUserData.clear
+  end
+end
+
+assert("Redis.new with one argument") do
+  assert_raise(ArgumentError) {Redis.new HOST}
+  r = Redis.new HOST, PORT
+  assert_raise(ArgumentError) {r.__send__(:initialize, HOST)}
+  assert_equal "PONG", r.ping
+  r.close
+end
