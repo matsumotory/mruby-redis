@@ -43,7 +43,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "mrb_pointer.h"
 
 #define DONE mrb_gc_arena_restore(mrb, 0);
 
@@ -108,6 +107,57 @@ static const struct mrb_data_type redisContext_type = {
     "redisContext", redisContext_free,
 };
 
+/*
+ * Redis.connect_set_udptr keeps its connection in this struct until
+ * Redis.new without arguments takes it. The struct is the data of an object
+ * in an instance variable of the Redis class whose name has no "@", so that
+ * Ruby code cannot read or replace it, and each mrb_state has its own. The
+ * gem does not use mrb->ud, which belongs to the application that embeds
+ * mruby.
+ */
+typedef struct {
+  redisContext *rc;
+} mrb_redis_kept_connection;
+
+#define MRB_REDIS_KEPT_CONNECTION_IV "__mruby_redis_kept_connection__"
+
+static void mrb_redis_kept_connection_free(mrb_state *mrb, void *p)
+{
+  mrb_redis_kept_connection *kept = (mrb_redis_kept_connection *)p;
+
+  if (kept != NULL) {
+    redisFree(kept->rc);
+    mrb_free(mrb, kept);
+  }
+}
+
+static const struct mrb_data_type mrb_redis_kept_connection_type = {
+    "mrb_redis_kept_connection", mrb_redis_kept_connection_free,
+};
+
+/* The kept connection of this mrb_state; with create FALSE, NULL when there is none yet. */
+static mrb_redis_kept_connection *mrb_redis_kept_connection_get(mrb_state *mrb, mrb_bool create)
+{
+  mrb_value redis = mrb_obj_value(mrb_class_get(mrb, "Redis"));
+  mrb_sym name = mrb_intern_lit(mrb, MRB_REDIS_KEPT_CONNECTION_IV);
+  mrb_redis_kept_connection *kept;
+  struct RData *holder;
+
+  kept = (mrb_redis_kept_connection *)mrb_data_check_get_ptr(mrb, mrb_iv_get(mrb, redis, name),
+                                                              &mrb_redis_kept_connection_type);
+  if (kept != NULL || !create) {
+    return kept;
+  }
+
+  holder = mrb_data_object_alloc(mrb, mrb->object_class, NULL, &mrb_redis_kept_connection_type);
+  kept = (mrb_redis_kept_connection *)mrb_malloc(mrb, sizeof(mrb_redis_kept_connection));
+  kept->rc = NULL;
+  holder->data = kept;
+  mrb_iv_set(mrb, redis, name, mrb_obj_value(holder));
+
+  return kept;
+}
+
 static inline void mrb_redis_check_error(redisContext *context, mrb_state *mrb)
 {
   if (context->err != 0) {
@@ -131,9 +181,11 @@ static inline void mrb_redis_check_error(redisContext *context, mrb_state *mrb)
   }
 }
 
+/* Redis.connect_set_udptr(host, port[, timeout]), also named Redis.connect_set_raw */
 static mrb_value mrb_redis_connect_set_raw(mrb_state *mrb, mrb_value self)
 {
   redisContext *rc;
+  mrb_redis_kept_connection *kept;
   mrb_value host, port;
   mrb_int timeout = 1;
   struct timeval timeout_struct = {timeout, 0};
@@ -142,44 +194,66 @@ static mrb_value mrb_redis_connect_set_raw(mrb_state *mrb, mrb_value self)
     timeout_struct.tv_sec = timeout;
   }
 
+  /* before the connection is made, so that no exception can leave it unowned */
+  kept = mrb_redis_kept_connection_get(mrb, TRUE);
+
   rc = redisConnectWithTimeout(mrb_str_to_cstr(mrb, host), mrb_fixnum(port), timeout_struct);
-  if (rc->err) {
+  if (rc == NULL || rc->err) {
+    redisFree(rc);
     mrb_raise(mrb, E_REDIS_ERROR, "redis connection failed.");
   }
 
-  mrb_udptr_set(mrb, (void *)rc);
+  /* a connection kept before that no Redis.new has taken */
+  redisFree(kept->rc);
+  kept->rc = rc;
 
   return self;
 }
 
+/*
+ * Redis.new(host, port[, timeout]) connects to the server. Redis.new without
+ * arguments takes the connection that Redis.connect_set_udptr kept.
+ */
 static mrb_value mrb_redis_connect(mrb_state *mrb, mrb_value self)
 {
   mrb_value host, port;
   mrb_int timeout = 1;
   struct timeval timeout_struct = {timeout, 0};
-  mrb_int argc = 0;
+  mrb_int argc;
+  mrb_redis_kept_connection *kept = NULL;
+  redisContext *rc;
 
-  redisContext *rc = (redisContext *)DATA_PTR(self);
+  argc = mrb_get_args(mrb, "|oo|i", &host, &port, &timeout);
+  if (argc == 1) {
+    mrb_raise(mrb, E_ARGUMENT_ERROR, "wrong number of arguments (given 1, expected 0, 2 or 3)");
+  }
+  if (argc == 0) {
+    kept = mrb_redis_kept_connection_get(mrb, FALSE);
+    if (kept == NULL || kept->rc == NULL) {
+      mrb_raise(mrb, E_REDIS_ERROR, "no connection kept: call Redis.connect_set_udptr first");
+    }
+  }
+
+  rc = (redisContext *)DATA_PTR(self);
   if (rc) {
     redisFree(rc);
   }
   DATA_TYPE(self) = &redisContext_type;
   DATA_PTR(self) = NULL;
 
-  argc = mrb_get_args(mrb, "|oo|i", &host, &port, &timeout);
-
-  if (argc == 3) {
-    timeout_struct.tv_sec = timeout;
+  if (argc == 0) {
+    /* the kept connection now belongs to this object alone */
+    rc = kept->rc;
+    kept->rc = NULL;
+  } else {
+    if (argc == 3) {
+      timeout_struct.tv_sec = timeout;
+    }
     rc = redisConnectWithTimeout(mrb_str_to_cstr(mrb, host), mrb_fixnum(port), timeout_struct);
-  } else if (argc == 2) {
-    rc = redisConnectWithTimeout(mrb_str_to_cstr(mrb, host), mrb_fixnum(port), timeout_struct);
-  } else if (argc == 0) {
-    rc = (redisContext *)mrb_udptr_get(mrb);
-  }
-
-  if (rc->err) {
-    redisFree(rc);
-    mrb_raise(mrb, E_REDIS_ERROR, "redis connection failed.");
+    if (rc == NULL || rc->err) {
+      redisFree(rc);
+      mrb_raise(mrb, E_REDIS_ERROR, "redis connection failed.");
+    }
   }
 
   DATA_PTR(self) = rc;
@@ -1484,7 +1558,7 @@ void mrb_mruby_redis_gem_init(mrb_state *mrb)
 
   mrb_define_method(mrb, redis, "initialize", mrb_redis_connect, MRB_ARGS_ANY());
 
-  /* use mruby-pointer for sharing between mrb_states */
+  /* connect and keep the connection for a later Redis.new without arguments */
   mrb_define_class_method(mrb, redis, "connect_set_raw", mrb_redis_connect_set_raw, MRB_ARGS_ANY());
   mrb_define_class_method(mrb, redis, "connect_set_udptr", mrb_redis_connect_set_raw, MRB_ARGS_ANY());
 
