@@ -87,5 +87,9 @@ MRuby::Gem::Specification.new('mruby-redis') do |spec|
   spec.linker.flags_before_libraries << "#{hiredis_dir}/lib/libhiredis.a"
 
   spec.add_dependency "mruby-sleep"
+  # The gem no longer calls mruby-pointer: Redis.connect_set_udptr keeps its
+  # connection in the mrb_state (src/mrb_redis.c), not in mrb->ud. The
+  # dependency stays, so that a build that gets mruby-pointer through this
+  # gem still has it.
   spec.add_dependency "mruby-pointer", :github => 'matsumotory/mruby-pointer'
 end
